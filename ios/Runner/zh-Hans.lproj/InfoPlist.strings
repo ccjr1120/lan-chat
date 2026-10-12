@@ -1,0 +1,5 @@
+"CFBundleDisplayName" = "局域网互传";
+"CFBundleName" = "局域网互传";
+"NSLocalNetworkUsageDescription" = "局域网互传需要访问本地网络，用于发现附近设备并在设备之间传输消息与文件。";
+"NSCameraUsageDescription" = "用于拍摄照片后发送给其他设备。";
+"NSPhotoLibraryUsageDescription" = "选择相册中的图片或视频发送给其他设备。";

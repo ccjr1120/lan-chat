@@ -1,0 +1,291 @@
+{
+  "@@locale": "en",
+  "allowDevice": "Allow this device to join?",
+  "peerType": "Type: {value0}",
+  "@peerType": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "peerAddress": "Address: {value0}",
+  "@peerAddress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "joinPermissionDetail": "Once approved, this device can view history and exchange messages and files.",
+  "reject": "Reject",
+  "allowJoin": "Allow",
+  "joinOptions": "How devices join",
+  "joinDirectly": "Join directly",
+  "requireApproval": "Require my approval",
+  "sessionStarted": "Session is running",
+  "scanToJoin": "Scan to join and start sharing",
+  "scanInstructions": "Scan with another device, or open the address in a browser",
+  "qrDescription": "QR code for web access: {value0}",
+  "@qrDescription": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "otherAddresses": "Other network addresses",
+  "refreshAddresses": "Refresh addresses",
+  "accessMode": "Joining options",
+  "directJoinDetail": "Devices on the same network can join directly",
+  "approvalDetail": "You decide whether new devices can join",
+  "currentDirectJoin": "Current: join directly",
+  "currentApproval": "Current: require my approval",
+  "copyAddress": "Copy address",
+  "addressCopied": "Address copied",
+  "noNetworkAddress": "No local network address found",
+  "networkHint": "Connect to Wi-Fi or enable a hotspot, then refresh the addresses.",
+  "fileAccessibility": "File {value0}, {value1}, click to open",
+  "@fileAccessibility": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      },
+      "value1": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpenHint": "{value0} · Click to open",
+  "@fileOpenHint": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadProgress": "Downloading {value0}%",
+  "@downloadProgress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "share": "Share",
+  "remove": "Remove",
+  "currentDevice": "This device",
+  "phoneBrowser": "Phone / Browser",
+  "connectionDiagram": "Connection example",
+  "sameNetworkNoAccount": "Same network · No account needed",
+  "startFailed": "Failed to start: {value0}",
+  "@startFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "endSessionTitle": "End this session?",
+  "endSessionDetail": "All devices will disconnect and active transfers will stop. Chat history and files will be kept.",
+  "continueSession": "Keep sharing",
+  "endSession": "End session",
+  "invalidAddress": "Enter a valid address, such as 192.168.1.8:8686",
+  "deviceName": "Device name",
+  "deviceNameHint": "The name other devices see",
+  "cancel": "Cancel",
+  "save": "Save",
+  "nameNextSession": "The new name takes effect the next time you start a session",
+  "backHome": "Back to home",
+  "joinSession": "Join a session",
+  "appName": "LAN Chat",
+  "renameDevice": "Rename device",
+  "findDevices": "Find a device and start sharing",
+  "homeHeadline": "Share files easily between devices",
+  "homeHeadlineCompact": "Share files easily\nbetween devices",
+  "sessionReady": "Your session is ready",
+  "findDevicesDetail": "Connect to the same Wi-Fi and choose a nearby session.",
+  "homeDetail": "Same Wi-Fi, no account needed. Share messages and files instantly.",
+  "inviteDetail": "Invite other devices. A computer browser works too.",
+  "joinNearbyDetail": "Connect to a nearby device with an active session",
+  "allDevicesHint": "Connect easily from phones and computers",
+  "sessionStillRunning": "Your session is still running",
+  "returnToSession": "Go back home to open or end your session",
+  "myDeviceRename": "My device · Click to rename",
+  "createSession": "Create a session",
+  "createSessionDetail": "Let other devices connect here to share messages, images and files.",
+  "creatingSession": "Creating…",
+  "enterSession": "Open session · {value0, plural, one{1 device online} other{{value0} devices online}}",
+  "@enterSession": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "joinAnotherSession": "Join another session",
+  "nearbySessions": "Nearby sessions",
+  "searchAgain": "Search again",
+  "searchingDevices": "Looking for nearby sessions",
+  "discoveryFailed": "Unable to discover devices",
+  "nearbyHint": "Make sure the other device has a session running on the same Wi-Fi.\nYou can also enter its address below.",
+  "enterAddress": "Enter a session address",
+  "manualAddressHint": "Cannot find the device? Use the address shown on the host",
+  "sessionAddress": "Session address",
+  "connectDevice": "Connect",
+  "sendFailed": "Failed to send: {value0}",
+  "@sendFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseFiles": "Choose files to send",
+  "filePickerFailed": "Cannot open the file picker: {value0}",
+  "@filePickerFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "fileSendFailed": "Failed to send “{value0}”",
+  "@fileSendFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "noAppForFile": "No app can open this file. Try sharing it instead.",
+  "openFailed": "Failed to open: {value0}",
+  "@openFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailed": "Failed to share: {value0}",
+  "@shareFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "copied": "Copied",
+  "clearHistory": "Clear chat history",
+  "clearHistoryDetail": "All messages and files saved on the host will be permanently deleted. History will be cleared on every device.",
+  "clear": "Clear",
+  "mySession": "My session",
+  "sessionSettings": "Addresses and joining options",
+  "sessionInfo": "Session information",
+  "connectedDevices": "Connected · {value0, plural, one{1 device online} other{{value0} devices online}}",
+  "@connectedDevices": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "connecting": "Connecting…",
+  "awaitingApproval": "Waiting for host approval",
+  "rejected": "Rejected",
+  "disconnected": "Disconnected",
+  "sessionEnded": "Session ended",
+  "approvalPendingDetail": "You can join once the host approves your request",
+  "unableToJoin": "Unable to join the session",
+  "joinRejected": "The host rejected your request",
+  "back": "Back",
+  "startSharing": "Connected. Start sharing!",
+  "preparingSession": "Preparing the session",
+  "inviteFirstFile": "Invite another device, or send your first file.",
+  "sharingHint": "Send messages, images and files from here.",
+  "inviteDevice": "Invite a device",
+  "connectingNow": "Connecting…",
+  "reconnecting": "Disconnected. Reconnecting…",
+  "retryNow": "Retry now",
+  "sendFile": "Send files",
+  "messageHint": "Write a message, or send a file…",
+  "connectBeforeSending": "Connect to start sending",
+  "send": "Send",
+  "hostAddress": "Host address {value0}",
+  "@hostAddress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "onlineDevicesCount": "Online devices ({value0})",
+  "@onlineDevicesCount": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "peerIsMe": "{value0} (me)",
+  "@peerIsMe": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "currentSession": "Current session",
+  "sessionDetails": "Session details",
+  "onlineDevices": "Online devices · {value0}",
+  "@onlineDevices": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "myDevice": "My device",
+  "networkSharingHint": "Connect to the same Wi-Fi to share messages and files directly between devices.",
+  "devicesConnected": "Your devices are connected",
+  "readyToShare": "{value0, plural, one{1 device online. Choose a file to start sharing.} other{{value0} devices online. Choose a file to start sharing.}}",
+  "@readyToShare": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionEmptyHint": "Your session is running. Invite another device, or add a file to the session.",
+  "chooseFileToSend": "Choose files to send",
+  "inviteOtherDevices": "Invite other devices",
+  "writeMessage": "Write a message",
+  "documentsFiles": "Documents and files",
+  "imagesVideos": "Images and videos",
+  "textLinks": "Text and links",
+  "sessionFiles": "Session files",
+  "fileCountSize": "{value0, plural, one{1 file · {value1}} other{{value0} files · {value1}}}",
+  "@fileCountSize": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      },
+      "value1": {
+        "type": "String"
+      }
+    }
+  },
+  "filesAppearHere": "Files will appear here",
+  "recentFilesHint": "Open recent files directly without searching through messages.",
+  "recentFilesLimit": "Files from the current history are shown here, with up to 12 recent files.",
+  "theme": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "me": "Me",
+  "host": "Host",
+  "web": "Browser",
+  "app": "App",
+  "unnamedDevice": "Unnamed device",
+  "hostSuffix": " (host)"
+}

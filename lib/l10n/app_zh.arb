@@ -1,0 +1,291 @@
+{
+  "@@locale": "zh",
+  "allowDevice": "允许这台设备加入？",
+  "peerType": "类型：{value0}",
+  "@peerType": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "peerAddress": "地址：{value0}",
+  "@peerAddress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "joinPermissionDetail": "同意后该设备可以查看聊天记录、收发消息和文件。",
+  "reject": "拒绝",
+  "allowJoin": "允许加入",
+  "joinOptions": "设备如何加入",
+  "joinDirectly": "直接加入",
+  "requireApproval": "需要我确认",
+  "sessionStarted": "会话已开启",
+  "scanToJoin": "扫码加入，开始互传",
+  "scanInstructions": "用另一台设备扫描，或在浏览器打开地址",
+  "qrDescription": "网页访问二维码：{value0}",
+  "@qrDescription": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "otherAddresses": "其他网络地址",
+  "refreshAddresses": "刷新地址",
+  "accessMode": "加入方式",
+  "directJoinDetail": "同一网络中的设备可直接加入",
+  "approvalDetail": "新设备加入时，由你决定是否允许",
+  "currentDirectJoin": "当前：直接加入",
+  "currentApproval": "当前：需要我确认",
+  "copyAddress": "复制地址",
+  "addressCopied": "地址已复制",
+  "noNetworkAddress": "未获取到局域网地址",
+  "networkHint": "连接 Wi-Fi 或开启个人热点后，刷新地址。",
+  "fileAccessibility": "文件 {value0}，{value1}，点击打开",
+  "@fileAccessibility": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      },
+      "value1": {
+        "type": "String"
+      }
+    }
+  },
+  "fileOpenHint": "{value0} · 点击打开",
+  "@fileOpenHint": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadProgress": "下载中 {value0}%",
+  "@downloadProgress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "share": "分享",
+  "remove": "移除",
+  "currentDevice": "当前设备",
+  "phoneBrowser": "手机 / 浏览器",
+  "connectionDiagram": "连接方式示意",
+  "sameNetworkNoAccount": "通过同一网络连接 · 无需账号",
+  "startFailed": "启动失败：{value0}",
+  "@startFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "endSessionTitle": "结束会话？",
+  "endSessionDetail": "所有设备将断开连接，正在进行的传输会中断。聊天记录和文件会保留。",
+  "continueSession": "继续会话",
+  "endSession": "结束会话",
+  "invalidAddress": "请输入有效地址，例如 192.168.1.8:8686",
+  "deviceName": "设备名称",
+  "deviceNameHint": "其他设备看到的名称",
+  "cancel": "取消",
+  "save": "保存",
+  "nameNextSession": "新名称将在下次开启服务时生效",
+  "backHome": "返回首页",
+  "joinSession": "加入会话",
+  "appName": "局域网互传",
+  "renameDevice": "修改设备名称",
+  "findDevices": "找到设备，开始互传",
+  "homeHeadline": "在设备之间，轻松传文件",
+  "homeHeadlineCompact": "在设备之间，\n轻松传文件",
+  "sessionReady": "你的会话已准备好",
+  "findDevicesDetail": "连接同一个 Wi-Fi，选择附近的会话。",
+  "homeDetail": "同一个 Wi-Fi，无需账号。文字和文件即刻互传。",
+  "inviteDetail": "邀请其他设备加入，电脑浏览器也能使用。",
+  "joinNearbyDetail": "连接附近已开启的设备",
+  "allDevicesHint": "手机、电脑，都能轻松连接",
+  "sessionStillRunning": "你的会话仍在运行",
+  "returnToSession": "返回首页可以进入或结束会话",
+  "myDeviceRename": "我的设备 · 点击修改名称",
+  "createSession": "创建会话",
+  "createSessionDetail": "让其他设备连接到这里，发送文字、图片和文件。",
+  "creatingSession": "正在创建…",
+  "enterSession": "进入会话 · {value0} 台设备在线",
+  "@enterSession": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "joinAnotherSession": "加入其他会话",
+  "nearbySessions": "附近的会话",
+  "searchAgain": "重新搜索",
+  "searchingDevices": "正在寻找附近的会话",
+  "discoveryFailed": "暂时无法发现设备",
+  "nearbyHint": "确认设备已创建会话，并连接同一个 Wi-Fi。\n也可以在下方输入地址加入。",
+  "enterAddress": "输入会话地址",
+  "manualAddressHint": "找不到设备？使用主机显示的地址",
+  "sessionAddress": "会话地址",
+  "connectDevice": "连接设备",
+  "sendFailed": "发送失败：{value0}",
+  "@sendFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "chooseFiles": "选择要发送的文件",
+  "filePickerFailed": "无法打开文件选择器：{value0}",
+  "@filePickerFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "fileSendFailed": "“{value0}”发送失败",
+  "@fileSendFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "noAppForFile": "没有可以打开该文件的应用，可尝试分享",
+  "openFailed": "打开失败：{value0}",
+  "@openFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "shareFailed": "分享失败：{value0}",
+  "@shareFailed": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "copied": "已复制",
+  "clearHistory": "清空聊天记录",
+  "clearHistoryDetail": "将删除所有消息与主机保存的文件，所有设备的聊天记录同步清空，无法恢复。",
+  "clear": "清空",
+  "mySession": "我的会话",
+  "sessionSettings": "访问地址与设置",
+  "sessionInfo": "会话信息",
+  "connectedDevices": "已连接 · {value0} 台设备在线",
+  "@connectedDevices": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "connecting": "连接中…",
+  "awaitingApproval": "等待主机确认",
+  "rejected": "已被拒绝",
+  "disconnected": "已断开",
+  "sessionEnded": "会话已结束",
+  "approvalPendingDetail": "主机同意后即可进入会话",
+  "unableToJoin": "无法加入会话",
+  "joinRejected": "主机拒绝了你的加入请求",
+  "back": "返回",
+  "startSharing": "连接好了，开始互传吧",
+  "preparingSession": "正在准备会话",
+  "inviteFirstFile": "邀请其他设备，或发送第一个文件。",
+  "sharingHint": "文字、图片和文件，都可以从这里发送。",
+  "inviteDevice": "邀请设备",
+  "connectingNow": "正在连接…",
+  "reconnecting": "连接已断开，正在重连",
+  "retryNow": "立即重试",
+  "sendFile": "发送文件",
+  "messageHint": "输入文字，或发送文件…",
+  "connectBeforeSending": "连接后即可发送",
+  "send": "发送",
+  "hostAddress": "主机地址 {value0}",
+  "@hostAddress": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "onlineDevicesCount": "在线设备（{value0}）",
+  "@onlineDevicesCount": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "peerIsMe": "{value0}（我）",
+  "@peerIsMe": {
+    "placeholders": {
+      "value0": {
+        "type": "String"
+      }
+    }
+  },
+  "currentSession": "当前会话",
+  "sessionDetails": "会话详情",
+  "onlineDevices": "在线设备 · {value0}",
+  "@onlineDevices": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "myDevice": "我的设备",
+  "networkSharingHint": "连接同一个 Wi-Fi，文字和文件直接在设备之间传输。",
+  "devicesConnected": "你的设备，已经连在一起",
+  "readyToShare": "{value0} 台设备在线。选择一个文件，开始这次互传。",
+  "@readyToShare": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionEmptyHint": "会话已开启。邀请另一台设备，或先把文件放进会话。",
+  "chooseFileToSend": "选择文件发送",
+  "inviteOtherDevices": "邀请其他设备",
+  "writeMessage": "发送一条文字",
+  "documentsFiles": "文档与文件",
+  "imagesVideos": "图片与视频",
+  "textLinks": "文字与链接",
+  "sessionFiles": "会话文件",
+  "fileCountSize": "{value0} 个文件 · {value1}",
+  "@fileCountSize": {
+    "placeholders": {
+      "value0": {
+        "type": "int"
+      },
+      "value1": {
+        "type": "String"
+      }
+    }
+  },
+  "filesAppearHere": "文件会出现在这里",
+  "recentFilesHint": "会话中的最近文件可直接打开，无需在消息中翻找。",
+  "recentFilesLimit": "这里显示当前同步记录中的文件，最多展示最近 12 个。",
+  "theme": "主题",
+  "themeSystem": "跟随系统",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "me": "我",
+  "host": "主机",
+  "web": "网页",
+  "app": "App",
+  "unnamedDevice": "未命名设备",
+  "hostSuffix": "（主机）"
+}

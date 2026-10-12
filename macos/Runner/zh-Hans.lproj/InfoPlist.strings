@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "局域网互传";
+"CFBundleName" = "局域网互传";
+"NSLocalNetworkUsageDescription" = "局域网互传需要访问本地网络，用于发现附近设备并在设备之间传输消息与文件。";

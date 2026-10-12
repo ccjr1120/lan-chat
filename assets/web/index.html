@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>局域网互传</title>
+<style>
+  /* AppColors in lib/ui/theme.dart; all assets are bundled for offline use. */
+  :root {
+    --primary:#3458E8; --primary-2:#4A76FF; --glow:rgba(52,88,232,.06);
+    --bg:#F7F8FA; --surface:#FFFFFF; --text:#182230;
+    --text2:#667085; --divider:#E4E7EC; --success:#16865C; --warning:#9A6700; --danger:#D92D20;
+    --self:#EEF2FF; --self-border:#E0E7FF; --on-primary:#FFFFFF; --primary-hover:#2946C0;
+    --warning-bg:#FFF7E6; --drop-bg:rgba(238,242,255,.96); --toast-text:#FFFFFF; --sidebar:256px;
+    --self-selection:rgba(255,255,255,.32); --ease:cubic-bezier(.33,1,.68,1); /* easeOutCubic，对应 AppMotion */
+    color-scheme:light dark;
+  }
+  @media (prefers-color-scheme:dark) {
+    :root {
+      --primary:#8BA4FF; --primary-2:#6C8CFF; --glow:rgba(139,164,255,.08);
+      --bg:#11151C; --surface:#1B222D; --text:#EDF1F7;
+      --text2:#A4AFC0; --divider:#323D4D; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
+      --self:#273453; --self-border:#3C486C; --on-primary:#11151C; --primary-hover:#A7B9FF;
+      --warning-bg:#2D291F; --drop-bg:rgba(39,52,83,.96); --toast-text:#11151C;
+      --self-selection:rgba(17,21,28,.32);
+    }
+  }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  html,body { height:100%; margin:0; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--text); font-size:15px; line-height:1.6;
+    /* 光晕叠在 --bg 之上并淡出到 transparent，合成后的终止色即 --bg；不直接写 --bg，以保留主题切换时背景色的过渡。 */
+    background:radial-gradient(90% 420px at 50% -140px,var(--glow),transparent 75%) no-repeat fixed, var(--bg);
+    display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); grid-template-rows:76px auto minmax(0,1fr) auto; }
+  body,header,footer,#peers,.session-card,.bubble,#overlay .card,dialog,#banner,#toast,.brand-mark,.empty .empty-icon,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
+  button,textarea { font:inherit; }
+  button { cursor:pointer; }
+  button:disabled { cursor:default; opacity:.45; }
+  button:focus-visible,textarea:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+  .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+  .ui-icon { width:22px; height:22px; flex:none; vertical-align:middle; }
+  header { grid-column:2; grid-row:1; display:flex; align-items:center; gap:16px; padding:16px 28px; border-bottom:1px solid var(--divider); background:var(--surface); }
+  header .title { flex:1; min-width:0; }
+  header h1 { margin:0; font-size:18px; font-weight:650; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  header .sub { font-size:12px; color:var(--text2); margin-top:3px; }
+  .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--text2); margin-right:6px; }
+  .dot.ok { background:var(--success); } .dot.warn { background:var(--warning); } .dot.bad { background:var(--danger); }
+  .btn { border:1px solid var(--divider); color:var(--text); background:var(--surface); border-radius:10px; padding:8px 14px; min-height:44px; font-size:13px;
+    transition:background-color .25s ease,color .25s ease,border-color .25s ease,box-shadow .2s var(--ease),transform .2s var(--ease),filter .2s var(--ease); }
+  .btn.primary { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); border-color:transparent; }
+  /* 禁用态降级为中性色，不保留渐变（与 App GradientFilledButton 一致）。 */
+  .btn.primary:disabled,.icon-btn.send:disabled { background:var(--divider); color:var(--text2); opacity:1; }
+  #peersBtn { display:none; }
+  main { display:contents; }
+  #list { grid-column:2; grid-row:3; min-height:0; overflow-y:auto; padding:24px max(20px,calc((100% - 880px)/2)); overscroll-behavior:contain; }
+  #peers { grid-column:1; grid-row:1 / 5; min-height:0; background:var(--surface); border-right:1px solid var(--divider); padding:28px 20px; overflow:auto; display:flex; flex-direction:column; }
+  .brand { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:700; margin-bottom:36px; }
+  .brand-mark { display:grid; place-items:center; width:40px; height:40px; color:var(--primary); background:var(--self); border-radius:12px; }
+  .sidebar-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
+  #sidebarTitle { font-size:15px; font-weight:600; overflow-wrap:anywhere; }
+  .session-card { background:var(--bg); border:1px solid var(--divider); padding:14px; border-radius:14px; margin-bottom:28px; }
+  #peers h2 { font-size:13px; margin:0 0 14px; font-weight:600; color:var(--text2); }
+  #peers ul { padding:0; margin:0; list-style:none; }
+  #peers li { position:relative; padding:12px 0 12px 16px; font-size:14px; font-weight:500; overflow-wrap:anywhere; }
+  #peers li::before { content:""; position:absolute; left:0; top:22px; width:6px; height:6px; border-radius:50%; background:var(--success); }
+  #peers li small { color:var(--text2); display:block; font-size:12px; font-weight:400; margin-top:2px; }
+  .sidebar-note { margin-top:auto; padding-top:36px; font-size:12px; color:var(--text2); line-height:1.8; }
+  .msg { display:flex; flex-direction:column; align-items:flex-start; padding:6px 0; }
+  .msg.self { align-items:flex-end; }
+  /* 入场动画只作用于列表末条：renderAll 会整体重建 DOM，避免进度刷新时全部重播。 */
+  #list > .msg:last-child:not(:has(.progress)) { animation:msg-in .2s var(--ease); }
+  @keyframes msg-in { from { opacity:0; transform:translateY(8px); } }
+  .meta { font-size:12px; color:var(--text2); padding:0 4px 6px; max-width:100%; overflow-wrap:anywhere; }
+  .time-divider { text-align:center; font-size:12px; color:var(--text2); padding:16px 0; }
+  .bubble { max-width:min(80%,560px); padding:11px 15px; border-radius:16px 16px 16px 4px; border:1px solid var(--divider);
+    background:var(--surface); white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
+  .msg.self .bubble { background:linear-gradient(135deg,var(--primary),var(--primary-2) 120%); border-color:transparent; color:var(--on-primary); border-radius:16px 16px 4px 16px; }
+  .msg.self .bubble:not(.file-card):not(.upload)::selection { background:var(--self-selection); color:var(--on-primary); }
+  .msg .bubble.file-card,.msg.self .bubble.upload { background:var(--surface); border-color:var(--divider); color:var(--text); padding:16px; }
+  .bubble.file-card { transition:background-color .25s ease,border-color .25s ease,color .25s ease,transform .2s var(--ease),box-shadow .2s var(--ease); }
+  .file { display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; min-width:0; width:300px; max-width:100%; }
+  .file .icon { width:44px; height:48px; border-radius:10px; color:var(--primary); background:var(--self); display:grid; place-items:center; font-size:11px; font-weight:700; flex:none; }
+  .file .info { flex:1; min-width:0; }
+  .file .name { font-size:14px; font-weight:600; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; white-space:normal; overflow-wrap:anywhere; }
+  .file .size { font-size:12px; color:var(--text2); margin-top:4px; }
+  .file .dl { color:var(--primary); font-size:12px; flex:none; padding:10px 0; }
+  .preview { display:block; max-width:100%; max-height:280px; object-fit:contain; border-radius:12px; margin-bottom:14px; }
+  .progress { height:4px; background:var(--divider); border-radius:4px; overflow:hidden; margin-top:14px; }
+  .progress > div { height:100%; background:var(--primary); width:0; transition:width .15s; }
+  .msg.self .upload.err { border-color:var(--danger); }
+  .upload .status { color:var(--text2); font-size:12px; margin-top:6px; }
+  .upload.err .status { color:var(--danger); }
+  footer { grid-column:2; grid-row:4; background:var(--surface); border-top:1px solid var(--divider); padding:16px max(20px,calc((100% - 880px)/2)); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
+  .composer { display:flex; align-items:flex-end; gap:4px; padding:6px; background:var(--bg); border:1px solid var(--divider); border-radius:16px;
+    transition:background-color .25s ease,border-color .2s var(--ease),box-shadow .2s var(--ease); }
+  .composer:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--glow); }
+  textarea { flex:1; min-width:0; resize:none; border:0; background:transparent; padding:11px 8px; max-height:140px; color:var(--text); line-height:1.5; }
+  textarea::placeholder { color:var(--text2); }
+  textarea:focus-visible { outline:none; }
+  .icon-btn { width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:12px; flex:none; background:transparent; color:var(--text2);
+    transition:background-color .2s var(--ease),color .2s var(--ease),box-shadow .2s var(--ease),transform .2s var(--ease),filter .2s var(--ease); }
+  .icon-btn.send { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); }
+  /* hover 仅在支持悬停的指针设备上生效，避免触屏点按后粘滞。 */
+  @media (hover:hover) {
+    .btn:hover:not(:disabled) { background-color:var(--bg); transform:translateY(-1px); }
+    .btn.primary:hover:not(:disabled) { filter:brightness(1.07); box-shadow:0 6px 14px -6px var(--primary); }
+    .bubble.file-card:hover { transform:translateY(-1px); box-shadow:0 8px 20px -10px rgba(24,34,48,.18); }
+    .icon-btn:hover:not(:disabled) { background-color:var(--self); color:var(--primary); }
+    .icon-btn.send:hover:not(:disabled) { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); filter:brightness(1.07); transform:translateY(-1px); box-shadow:0 6px 14px -6px var(--primary); }
+  }
+  @media (hover:hover) and (prefers-color-scheme:dark) {
+    .bubble.file-card:hover { box-shadow:0 8px 20px -10px rgba(0,0,0,.55); }
+  }
+  .composer-hint { font-size:11px; color:var(--text2); padding-top:8px; text-align:center; }
+  .empty { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 16px; color:var(--text2); }
+  .empty .empty-icon { display:grid; place-items:center; background:var(--self); color:var(--primary); border-radius:24px; width:72px; height:72px; margin-bottom:20px; }
+  .empty .ui-icon { width:32px; height:32px; }
+  .empty h2 { font-size:20px; color:var(--text); margin:0 0 8px; letter-spacing:-0.4px; }
+  .empty p { font-size:14px; margin:0; }
+  .spinner { width:32px; height:32px; margin:0 auto 24px; border:3px solid var(--divider); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes fade-in { from { opacity:0; } }
+  @keyframes banner-in { from { opacity:0; transform:translateY(-8px); } }
+  @keyframes toast-in { from { opacity:0; transform:translate(-50%,8px); } }
+  @keyframes dialog-in { from { opacity:0; transform:translateY(8px) scale(.98); } }
+  #overlay { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:10; }
+  #overlay:not([hidden]) { animation:fade-in .2s var(--ease); }
+  #overlay .card { background:var(--surface); border:1px solid var(--divider); border-radius:24px; padding:36px 28px; width:min(92vw,400px); text-align:center; }
+  #overlay h2 { font-size:20px; margin:0 0 8px; letter-spacing:-0.4px; }
+  #overlay p { font-size:14px; overflow-wrap:anywhere; }
+  #drop { position:fixed; inset:16px; border:2px dashed var(--primary); border-radius:24px; background:var(--drop-bg); display:flex; flex-direction:column; gap:16px; align-items:center; justify-content:center; font-size:22px; font-weight:600; color:var(--primary); z-index:20; pointer-events:none; }
+  #drop .ui-icon { width:48px; height:48px; }
+  #toast { position:fixed; left:50%; bottom:120px; transform:translateX(-50%); max-width:90vw; background:var(--text); color:var(--toast-text); padding:10px 18px; border-radius:12px; font-size:13px; z-index:30; }
+  #toast:not([hidden]) { animation:toast-in .2s var(--ease); }
+  #banner { grid-column:2; grid-row:2; background:var(--warning-bg); color:var(--warning); font-size:13px; padding:10px 28px; }
+  #banner:not([hidden]) { animation:banner-in .2s var(--ease); }
+  dialog { width:min(400px,92vw); border:1px solid var(--divider); border-radius:24px; padding:28px; color:var(--text); background:var(--surface); }
+  dialog[open] { animation:dialog-in .2s var(--ease); }
+  dialog[open]::backdrop { animation:fade-in .2s var(--ease); }
+  dialog::backdrop { background:rgba(24,34,48,.3); }
+  dialog h2 { margin:0 0 8px; font-size:20px; letter-spacing:-0.4px; }
+  dialog p,dialog label { color:var(--text2); font-size:13px; }
+  dialog label { display:block; margin:20px 0 6px; }
+  dialog input { width:100%; padding:12px 14px; font:inherit; border:1px solid var(--divider); border-radius:12px; background:var(--bg); color:var(--text); }
+  dialog input:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+  .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
+  #peerClose { display:none; }
+  #peerBackdrop { display:none; }
+  @media (max-width:899px) {
+    body { grid-template-columns:minmax(0,1fr); grid-template-rows:72px auto minmax(0,1fr) auto; }
+    header,#list,footer,#banner { grid-column:1; }
+    header { padding:12px 16px; gap:10px; }
+    header h1 { font-size:16px; }
+    #peersBtn { display:block; }
+    #renameBtn { padding:8px 10px; }
+    #list { padding:16px; }
+    #peers { display:none; }
+    #peers.show { display:flex; position:fixed; right:0; top:0; bottom:0; width:min(300px,86vw); z-index:6; border:0; box-shadow:-8px 0 32px rgba(24,34,48,.12); }
+    #peerClose { display:grid; position:absolute; right:10px; top:10px; }
+    #peerBackdrop.show { display:block; position:fixed; inset:0; z-index:5; border:0; background:rgba(24,34,48,.25); }
+    footer { padding:12px 12px calc(12px + env(safe-area-inset-bottom)); }
+    .composer-hint { display:none; }
+    .bubble { max-width:88%; }
+    .file { width:270px; gap:10px; }
+    .msg .bubble.file-card,.msg.self .bubble.upload { padding:12px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    /* 全量禁用：覆盖现有及以后新增的动画与过渡，hover 也不再位移。 */
+    *, *::before, *::after { animation:none !important; transition:none !important; }
+    /* ::backdrop 单独成规则：旧浏览器不识别时不会连带丢弃上一条。 */
+    ::backdrop { animation:none !important; }
+    .btn:hover, .icon-btn:hover, .bubble.file-card:hover { transform:none !important; }
+  }
+</style>
+</head>
+<body>
+<!-- Lucide SVG icons, revision lucide-static@1.54.0
+ISC License
+
+Copyright (c) 2026 Lucide Icons and Contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+—-
+
+The following Lucide icons are derived from the Feather project:
+
+airplay, alert-circle, alert-octagon, alert-triangle, aperture, arrow-down-circle, arrow-down-left, arrow-down-right, arrow-down, arrow-left-circle, arrow-left, arrow-right-circle, arrow-right, arrow-up-circle, arrow-up-left, arrow-up-right, arrow-up, at-sign, calendar, cast, check, chevron-down, chevron-left, chevron-right, chevron-up, chevrons-down, chevrons-left, chevrons-right, chevrons-up, circle, clipboard, clock, code, columns, command, compass, corner-down-left, corner-down-right, corner-left-down, corner-left-up, corner-right-down, corner-right-up, corner-up-left, corner-up-right, crosshair, database, divide-circle, divide-square, dollar-sign, download, external-link, feather, frown, hash, headphones, help-circle, info, italic, key, layout, life-buoy, link-2, link, loader, lock, log-in, log-out, maximize, meh, minimize, minimize-2, minus-circle, minus-square, minus, monitor, moon, more-horizontal, more-vertical, move, music, navigation-2, navigation, octagon, pause-circle, percent, plus-circle, plus-square, plus, power, radio, rss, search, server, share, shopping-bag, sidebar, smartphone, smile, square, table-2, tablet, target, terminal, trash-2, trash, triangle, tv, type, upload, x-circle, x-octagon, x-square, x, zoom-in, zoom-out
+
+The MIT License (MIT) (for the icons listed above)
+
+Copyright (c) 2013-present Cole Bemis
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+-->
+<header>
+  <div class="title">
+    <h1 id="title">局域网互传</h1>
+    <div class="sub"><span id="dot" class="dot"></span><span id="status">正在连接…</span></div>
+  </div>
+  <button id="renameBtn" class="btn" type="button" title="修改我的名称">我的名称</button>
+  <button id="peersBtn" class="btn" type="button" aria-controls="peers" aria-expanded="false">在线 <span id="peerCount">0</span></button>
+</header>
+<div id="banner" role="status" hidden></div>
+<main>
+<button id="peerBackdrop" type="button" aria-label="关闭设备列表" tabindex="-1"></button>
+  <div id="list" role="log" aria-live="polite" aria-label="聊天记录"></div>
+  <aside id="peers" aria-label="在线设备">
+    <button id="peerClose" class="icon-btn" type="button" aria-label="关闭设备列表"><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 6 6 18" />
+  <path d="m6 6 12 12" />
+</svg></button>
+    <div class="brand"><span class="brand-mark"><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" />
+  <path d="M10 19v-3.96 3.15" />
+  <path d="M7 19h5" />
+  <rect width="6" height="10" x="16" y="12" rx="2" />
+</svg></span>局域网互传</div>
+    <div class="session-card"><div class="sidebar-label">当前会话</div><div id="sidebarTitle">正在连接…</div></div>
+    <h2>在线设备</h2>
+    <ul id="peerList"></ul>
+    <p class="sidebar-note">连接同一个 Wi-Fi，文字和文件直接在设备之间传输。<br>电脑无需安装 App。</p>
+  </aside>
+</main>
+<footer>
+<div class="composer">
+  <input id="fileInput" type="file" multiple class="sr-only" aria-hidden="true" tabindex="-1">
+  <button id="attachBtn" class="icon-btn" type="button" aria-label="发送文件（也可拖拽文件到页面）" title="发送文件（也可拖拽到页面）" disabled><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551" />
+</svg></button>
+  <label for="input" class="sr-only">输入消息</label>
+  <textarea id="input" rows="1" placeholder="输入文字，或发送文件…" disabled></textarea>
+  <button id="sendBtn" class="icon-btn send" type="button" aria-label="发送" disabled><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m5 12 7-7 7 7" />
+  <path d="M12 19V5" />
+</svg></button>
+</div><div class="composer-hint">拖入文件或粘贴截图即可发送 · Enter 发送，Shift + Enter 换行</div>
+</footer>
+<div id="overlay" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+  <div class="card">
+    <div id="overlaySpinner" class="spinner"></div>
+    <h2 id="overlayTitle">正在连接主机…</h2>
+    <p id="overlayDetail" style="color:var(--text2)"></p>
+    <button id="overlayBtn" class="btn primary" type="button" hidden>重新连接</button>
+  </div>
+</div>
+<div id="drop" hidden><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+  <path d="M14 2v5a1 1 0 0 0 1 1h5" />
+  <path d="M12 12v6" />
+  <path d="m15 15-3-3-3 3" />
+</svg>松开以发送文件</div>
+<div id="toast" role="status" hidden></div>
+<dialog id="nameDialog" aria-labelledby="nameTitle">
+  <form id="nameForm">
+    <h2 id="nameTitle">我的设备名称</h2>
+    <p>其他设备会通过这个名称识别你。</p>
+    <label for="nameInput">设备名称</label>
+    <input id="nameInput" name="name" maxlength="32" required autocomplete="off">
+    <div class="dialog-actions">
+      <button id="nameCancel" class="btn" type="button">取消</button>
+      <button class="btn primary" type="submit">保存名称</button>
+    </div>
+  </form>
+</dialog>
+<script>
+(function () {
+  'use strict';
+
+  var preferredLanguages = navigator.languages || [navigator.language || 'en'];
+  var language = preferredLanguages.find(function (value) { return /^(zh|en)(-|$)/i.test(value); }) || 'en';
+  language = /^zh/i.test(language) ? 'zh-CN' : 'en';
+  var english = {
+  "允许这台设备加入？": "Allow this device to join?",
+  "同意后该设备可以查看聊天记录、收发消息和文件。": "Once approved, this device can view history and exchange messages and files.",
+  "拒绝": "Reject",
+  "允许加入": "Allow",
+  "设备如何加入": "How devices join",
+  "直接加入": "Join directly",
+  "需要我确认": "Require my approval",
+  "会话已开启": "Session is running",
+  "扫码加入，开始互传": "Scan to join and start sharing",
+  "用另一台设备扫描，或在浏览器打开地址": "Scan with another device, or open the address in a browser",
+  "其他网络地址": "Other network addresses",
+  "刷新地址": "Refresh addresses",
+  "加入方式": "Joining options",
+  "同一网络中的设备可直接加入": "Devices on the same network can join directly",
+  "新设备加入时，由你决定是否允许": "You decide whether new devices can join",
+  "当前：直接加入": "Current: join directly",
+  "当前：需要我确认": "Current: require my approval",
+  "复制地址": "Copy address",
+  "地址已复制": "Address copied",
+  "未获取到局域网地址": "No local network address found",
+  "连接 Wi-Fi 或开启个人热点后，刷新地址。": "Connect to Wi-Fi or enable a hotspot, then refresh the addresses.",
+  "分享": "Share",
+  "移除": "Remove",
+  "当前设备": "This device",
+  "手机 / 浏览器": "Phone / Browser",
+  "连接方式示意": "Connection example",
+  "通过同一网络连接 · 无需账号": "Same network · No account needed",
+  "结束会话？": "End this session?",
+  "所有设备将断开连接，正在进行的传输会中断。聊天记录和文件会保留。": "All devices will disconnect and active transfers will stop. Chat history and files will be kept.",
+  "继续会话": "Keep sharing",
+  "结束会话": "End session",
+  "请输入有效地址，例如 192.168.1.8:8686": "Enter a valid address, such as 192.168.1.8:8686",
+  "设备名称": "Device name",
+  "其他设备看到的名称": "The name other devices see",
+  "取消": "Cancel",
+  "保存": "Save",
+  "新名称将在下次开启服务时生效": "The new name takes effect the next time you start a session",
+  "返回首页": "Back to home",
+  "加入会话": "Join a session",
+  "局域网互传": "LAN Chat",
+  "修改设备名称": "Rename device",
+  "找到设备，开始互传": "Find a device and start sharing",
+  "在设备之间，轻松传文件": "Share files easily between devices",
+  "在设备之间，\n轻松传文件": "Share files easily\nbetween devices",
+  "你的会话已准备好": "Your session is ready",
+  "连接同一个 Wi-Fi，选择附近的会话。": "Connect to the same Wi-Fi and choose a nearby session.",
+  "同一个 Wi-Fi，无需账号。文字和文件即刻互传。": "Same Wi-Fi, no account needed. Share messages and files instantly.",
+  "邀请其他设备加入，电脑浏览器也能使用。": "Invite other devices. A computer browser works too.",
+  "连接附近已开启的设备": "Connect to a nearby device with an active session",
+  "手机、电脑，都能轻松连接": "Connect easily from phones and computers",
+  "你的会话仍在运行": "Your session is still running",
+  "返回首页可以进入或结束会话": "Go back home to open or end your session",
+  "我的设备 · 点击修改名称": "My device · Click to rename",
+  "创建会话": "Create a session",
+  "让其他设备连接到这里，发送文字、图片和文件。": "Let other devices connect here to share messages, images and files.",
+  "正在创建…": "Creating…",
+  "加入其他会话": "Join another session",
+  "附近的会话": "Nearby sessions",
+  "重新搜索": "Search again",
+  "正在寻找附近的会话": "Looking for nearby sessions",
+  "暂时无法发现设备": "Unable to discover devices",
+  "确认设备已创建会话，并连接同一个 Wi-Fi。\n也可以在下方输入地址加入。": "Make sure the other device has a session running on the same Wi-Fi.\nYou can also enter its address below.",
+  "输入会话地址": "Enter a session address",
+  "找不到设备？使用主机显示的地址": "Cannot find the device? Use the address shown on the host",
+  "会话地址": "Session address",
+  "连接设备": "Connect",
+  "选择要发送的文件": "Choose files to send",
+  "没有可以打开该文件的应用，可尝试分享": "No app can open this file. Try sharing it instead.",
+  "已复制": "Copied",
+  "清空聊天记录": "Clear chat history",
+  "将删除所有消息与主机保存的文件，所有设备的聊天记录同步清空，无法恢复。": "All messages and files saved on the host will be permanently deleted. History will be cleared on every device.",
+  "清空": "Clear",
+  "我的会话": "My session",
+  "访问地址与设置": "Addresses and joining options",
+  "会话信息": "Session information",
+  "连接中…": "Connecting…",
+  "等待主机确认": "Waiting for host approval",
+  "已被拒绝": "Rejected",
+  "已断开": "Disconnected",
+  "会话已结束": "Session ended",
+  "主机同意后即可进入会话": "You can join once the host approves your request",
+  "无法加入会话": "Unable to join the session",
+  "主机拒绝了你的加入请求": "The host rejected your request",
+  "返回": "Back",
+  "连接好了，开始互传吧": "Connected. Start sharing!",
+  "正在准备会话": "Preparing the session",
+  "邀请其他设备，或发送第一个文件。": "Invite another device, or send your first file.",
+  "文字、图片和文件，都可以从这里发送。": "Send messages, images and files from here.",
+  "邀请设备": "Invite a device",
+  "正在连接…": "Connecting…",
+  "连接已断开，正在重连": "Disconnected. Reconnecting…",
+  "立即重试": "Retry now",
+  "发送文件": "Send files",
+  "输入文字，或发送文件…": "Write a message, or send a file…",
+  "连接后即可发送": "Connect to start sending",
+  "发送": "Send",
+  "当前会话": "Current session",
+  "会话详情": "Session details",
+  "我的设备": "My device",
+  "连接同一个 Wi-Fi，文字和文件直接在设备之间传输。": "Connect to the same Wi-Fi to share messages and files directly between devices.",
+  "你的设备，已经连在一起": "Your devices are connected",
+  "会话已开启。邀请另一台设备，或先把文件放进会话。": "Your session is running. Invite another device, or add a file to the session.",
+  "选择文件发送": "Choose files to send",
+  "邀请其他设备": "Invite other devices",
+  "发送一条文字": "Write a message",
+  "文档与文件": "Documents and files",
+  "图片与视频": "Images and videos",
+  "文字与链接": "Text and links",
+  "会话文件": "Session files",
+  "文件会出现在这里": "Files will appear here",
+  "会话中的最近文件可直接打开，无需在消息中翻找。": "Open recent files directly without searching through messages.",
+  "这里显示当前同步记录中的文件，最多展示最近 12 个。": "Files from the current history are shown here, with up to 12 recent files.",
+  "主题": "Theme",
+  "跟随系统": "System",
+  "浅色": "Light",
+  "深色": "Dark",
+  "我": "Me",
+  "主机": "Host",
+  "网页": "Browser",
+  "App": "App",
+  "未命名设备": "Unnamed device",
+  "（主机）": " (host)",
+  "修改我的名称": "Rename my device",
+  "我的名称": "My name",
+  "在线": "Online",
+  "关闭设备列表": "Close device list",
+  "聊天记录": "Chat history",
+  "在线设备": "Online devices",
+  "电脑无需安装 App。": "No app installation needed on computers.",
+  "发送文件（也可拖拽文件到页面）": "Send files (or drag files onto the page)",
+  "发送文件（也可拖拽到页面）": "Send files (or drag onto the page)",
+  "输入消息": "Write a message",
+  "拖入文件或粘贴截图即可发送 · Enter 发送，Shift + Enter 换行": "Drag files or paste screenshots · Enter to send, Shift + Enter for a new line",
+  "正在连接主机…": "Connecting to the host…",
+  "重新连接": "Reconnect",
+  "松开以发送文件": "Drop to send files",
+  "我的设备名称": "My device name",
+  "其他设备会通过这个名称识别你。": "Other devices will identify you by this name.",
+  "保存名称": "Save name",
+  "设备": "Device",
+  "浏览器": "Browser",
+  "未知": "Unknown",
+  "（我）": " (me)",
+  "点击下载 ": "Download ",
+  "下载": "Download",
+  "发送文字，或把文件拖到这里。": "Write a message, or drag a file here.",
+  "主机已结束会话": "The host ended the session",
+  "连接已断开": "Disconnected",
+  "，": ", ",
+  " 秒后重试": " s before retrying",
+  "，正在自动重连…": ". Reconnecting automatically…",
+  "已向主机发送加入请求，请在主机 App 上点击“同意”": "A request was sent. Select “Allow” in the host app to join.",
+  " · 局域网互传": " · LAN Chat",
+  "已连接": "Connected",
+  "尚未连接到主机": "Not connected to the host",
+  "上传失败（HTTP ": "Upload failed (HTTP ",
+  "）": ")",
+  "网络错误，上传失败": "Network error. Upload failed.",
+  "名称已修改，重新连接后生效": "Name updated. It takes effect after reconnecting.",
+  "服务器内部错误": "Internal server error",
+  "未授权": "Not authorized",
+  "需要 multipart/form-data": "Expected multipart/form-data",
+  "未找到文件分段": "No file found in the upload",
+  "上传失败": "Upload failed",
+  "文件不存在": "The file does not exist",
+  "文件已被删除": "The file has been deleted",
+  "消息过长": "Message is too long"
+};
+  function t(value) { return language === 'zh-CN' ? value : (english[value] || value); }
+  function diagnostic(value) {
+    if (typeof value !== 'string') return '';
+    if (language === 'zh-CN') return value;
+    if (english[value]) return english[value];
+    if (value.indexOf('上传失败：') === 0) return 'Upload failed: ' + value.slice(5);
+    return value;
+  }
+  function translatePage() {
+    document.documentElement.lang = language;
+    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    var node;
+    while ((node = walker.nextNode())) {
+      if (node.parentElement.closest('script,style')) continue;
+      var source = node.textContent.trim();
+      if (english[source]) node.textContent = node.textContent.replace(source, t(source));
+    }
+    document.querySelectorAll('[title],[aria-label],[placeholder]').forEach(function (element) {
+      ['title', 'aria-label', 'placeholder'].forEach(function (attribute) {
+        if (element.hasAttribute(attribute)) element.setAttribute(attribute, t(element.getAttribute(attribute)));
+      });
+    });
+    document.title = t('局域网互传');
+  }
+  translatePage();
+
+  // 协议与 lib/core/protocol/ws_event.dart 一致。
+  var $ = function (id) { return document.getElementById(id); };
+  var els = {
+    list: $('list'), input: $('input'), send: $('sendBtn'), attach: $('attachBtn'), file: $('fileInput'),
+    title: $('title'), status: $('status'), dot: $('dot'), peerCount: $('peerCount'), peerList: $('peerList'),
+    peers: $('peers'), peersBtn: $('peersBtn'), rename: $('renameBtn'), banner: $('banner'),
+    overlay: $('overlay'), overlayTitle: $('overlayTitle'), overlayDetail: $('overlayDetail'),
+    overlaySpinner: $('overlaySpinner'), overlayBtn: $('overlayBtn'), drop: $('drop'), toast: $('toast')
+  };
+
+  var state = {
+    ws: null, token: null, self: null, joined: false, rejected: false, closedByHost: false,
+    messages: [], ids: {}, uploads: [], retry: 0, retryTimer: null
+  };
+
+  function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function storageSet(key, v) { try { localStorage.setItem(key, v); } catch (e) { /* 隐私模式 */ } }
+
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  var deviceId = storageGet('lanchat.deviceId') || uuid();
+  storageSet('lanchat.deviceId', deviceId);
+
+  function defaultName() {
+    var ua = navigator.userAgent;
+    var os = /iPhone|iPad/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac'
+      : /Windows/.test(ua) ? 'Windows' : /Linux/.test(ua) ? 'Linux' : t("设备");
+    var br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox'
+      : /Safari\//.test(ua) ? 'Safari' : t("浏览器");
+    return os + ' ' + br + ' ' + deviceId.slice(0, 4).toUpperCase();
+  }
+  var myName = storageGet('lanchat.name') || defaultName();
+
+  // ------------------------------------------------------------------ 工具
+  function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    var units = ['KB', 'MB', 'GB', 'TB'], v = n / 1024, i = 0;
+    while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+    return v.toFixed(v >= 100 ? 0 : 1) + ' ' + units[i];
+  }
+  function two(v) { return v < 10 ? '0' + v : '' + v; }
+  function formatTime(ts) {
+    var date = new Date(ts), now = new Date(), hm = two(date.getHours()) + ':' + two(date.getMinutes());
+    if (date.toDateString() === now.toDateString()) return hm;
+    var options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false };
+    if (date.getFullYear() !== now.getFullYear()) options.year = 'numeric';
+    return date.toLocaleString(language, options);
+  }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function fileUrl(file, download) {
+    return '/api/files/' + encodeURIComponent(file.id) + '?token=' + encodeURIComponent(state.token || '') +
+      (download ? '&download=1' : '');
+  }
+  function fileTag(file) {
+    var m = /\.([A-Za-z0-9]{1,4})$/.exec(file.name);
+    return m ? m[1].toUpperCase() : 'FILE';
+  }
+  var toastTimer = null;
+  function toast(text) {
+    els.toast.textContent = text; els.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { els.toast.hidden = true; }, 2500);
+  }
+  function atBottom() { return els.list.scrollHeight - els.list.scrollTop - els.list.clientHeight < 80; }
+  function scrollBottom() { els.list.scrollTop = els.list.scrollHeight; }
+  // ------------------------------------------------------------------ 渲染
+  function renderMessage(m) {
+    var isSelf = state.self && m.sender && m.sender.id === state.self.id;
+    var row = el('div', 'msg' + (isSelf ? ' self' : ''));
+    var who = isSelf ? t("我") : (m.sender ? m.sender.name : t("未知")) + (m.sender && m.sender.platform === 'host' ? t("（主机）") : '');
+    row.appendChild(el('div', 'meta', who + ' · ' + formatTime(m.timestamp)));
+    var bubble = el('div', 'bubble');
+    if (m.kind === 'file') bubble.classList.add('file-card');
+    if (m.kind === 'file' && m.file) {
+      var f = m.file;
+      if (/^image\//.test(f.mime)) {
+        var img = el('img', 'preview');
+        img.loading = 'lazy'; img.alt = f.name; img.src = fileUrl(f, false);
+        var imgLink = el('a'); imgLink.href = fileUrl(f, false); imgLink.target = '_blank'; imgLink.rel = 'noopener';
+        imgLink.appendChild(img);
+        bubble.appendChild(imgLink);
+      }
+      var a = el('a', 'file');
+      a.href = fileUrl(f, true);
+      a.setAttribute('download', f.name);
+      a.title = t("点击下载 ") + f.name;
+      a.appendChild(el('div', 'icon', fileTag(f)));
+      var info = el('div', 'info');
+      info.appendChild(el('div', 'name', f.name));
+      info.appendChild(el('div', 'size', formatBytes(f.size)));
+      a.appendChild(info);
+      a.appendChild(el('span', 'dl', t("下载")));
+      bubble.appendChild(a);
+    } else {
+      bubble.textContent = m.text || '';
+    }
+    row.appendChild(bubble);
+    return row;
+  }
+
+  function renderUpload(u) {
+    var row = el('div', 'msg self');
+    var box = el('div', 'bubble upload' + (u.error ? ' err' : ''));
+    var head = el('div', 'file');
+    head.appendChild(el('div', 'icon', fileTag({ name: u.name })));
+    var info = el('div', 'info');
+    info.appendChild(el('div', 'name', u.name));
+    var pct = u.size > 0 ? Math.min(100, Math.round(u.sent / u.size * 100)) : 0;
+    info.appendChild(el('div', 'status', u.error ? u.error : formatBytes(u.sent) + ' / ' + formatBytes(u.size) + '  ' + pct + '%'));
+    head.appendChild(info);
+    var btn = el('button', 'btn', u.error ? t("移除") : t("取消"));
+    btn.type = 'button';
+    btn.addEventListener('click', function () {
+      if (!u.error && u.xhr) u.xhr.abort();
+      removeUpload(u);
+    });
+    head.appendChild(btn);
+    box.appendChild(head);
+    if (!u.error) {
+      var bar = el('div', 'progress'), fill = el('div');
+      fill.style.width = pct + '%';
+      bar.appendChild(fill);
+      box.appendChild(bar);
+    }
+    row.appendChild(box);
+    return row;
+  }
+
+  function renderAll() {
+    var stick = atBottom();
+    els.list.textContent = '';
+    if (!state.messages.length && !state.uploads.length) {
+      var empty = el('div', 'empty');
+      var icon = el('div', 'empty-icon');
+      icon.appendChild(document.querySelector('.brand-mark svg').cloneNode(true));
+      empty.appendChild(icon);
+      empty.appendChild(el('h2', null, t("连接好了，开始互传吧")));
+      empty.appendChild(el('p', null, t("发送文字，或把文件拖到这里。")));
+      els.list.appendChild(empty);
+      return;
+    }
+    var frag = document.createDocumentFragment();
+    state.messages.forEach(function (m, index) {
+      var prev = state.messages[index - 1];
+      var separated = !prev || m.timestamp - prev.timestamp > 5 * 60 * 1000;
+      if (separated) frag.appendChild(el('div', 'time-divider', formatTime(m.timestamp)));
+      var row = renderMessage(m);
+      if (!separated && prev.sender && m.sender && prev.sender.id === m.sender.id) row.querySelector('.meta').hidden = true;
+      frag.appendChild(row);
+    });
+    state.uploads.forEach(function (u) { frag.appendChild(renderUpload(u)); });
+    els.list.appendChild(frag);
+    if (stick) scrollBottom();
+  }
+
+  function addMessage(m) {
+    if (!m || !m.id || state.ids[m.id]) return false;
+    state.ids[m.id] = true;
+    state.messages.push(m);
+    return true;
+  }
+
+  function renderPeers(peers) {
+    els.peerCount.textContent = peers.length;
+    els.peerList.textContent = '';
+    var labels = { host: t("主机"), app: 'App', web: t("网页") };
+    peers.forEach(function (p) {
+      var li = el('li', null, p.name + (state.self && p.id === state.self.id ? t("（我）") : ''));
+      li.appendChild(el('small', null, labels[p.platform] || p.platform));
+      els.peerList.appendChild(li);
+    });
+  }
+
+  function setStatus(text, kind) {
+    els.status.textContent = text;
+    els.dot.className = 'dot' + (kind ? ' ' + kind : '');
+  }
+
+  function setEnabled(on) {
+    els.input.disabled = !on; els.send.disabled = !on || !els.input.value.trim(); els.attach.disabled = !on;
+  }
+
+  function showOverlay(title, detail, opts) {
+    opts = opts || {};
+    els.overlay.hidden = false;
+    els.overlayTitle.textContent = title;
+    els.overlayDetail.textContent = detail || '';
+    els.overlaySpinner.hidden = !opts.spinner;
+    els.overlayBtn.hidden = !opts.button;
+  }
+  function hideOverlay() { els.overlay.hidden = true; }
+  // ------------------------------------------------------------------ WebSocket
+  function connect() {
+    clearTimeout(state.retryTimer);
+    if (state.rejected) return;
+    var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    var ws;
+    try { ws = new WebSocket(proto + location.host + '/ws'); } catch (e) { scheduleRetry(); return; }
+    state.ws = ws;
+    setStatus(t("正在连接…"), 'warn');
+    if (!state.joined && !state.messages.length) showOverlay(t("正在连接主机…"), location.host, { spinner: true });
+
+    ws.onopen = function () {
+      ws.send(JSON.stringify({ type: 'hello', data: { deviceId: deviceId, name: myName, platform: 'web' } }));
+    };
+    ws.onmessage = function (ev) {
+      var e;
+      try { e = JSON.parse(ev.data); } catch (err) { return; }
+      if (!e || typeof e.type !== 'string') return;
+      handle(e.type, e.data);
+    };
+    ws.onclose = function () {
+      if (state.ws !== ws) return;
+      state.ws = null; state.joined = false; state.token = null;
+      setEnabled(false);
+      if (state.rejected) return;
+      scheduleRetry();
+    };
+    ws.onerror = function () { /* onclose 统一处理 */ };
+  }
+
+  function scheduleRetry() {
+    state.retry++;
+    var delay = Math.min(15, Math.pow(2, Math.min(state.retry - 1, 4)));
+    var reason = state.closedByHost ? t("主机已结束会话") : t("连接已断开");
+    setStatus(reason + t('，') + delay + t(" 秒后重试"), 'bad');
+    els.banner.hidden = false;
+    els.banner.textContent = reason + t("，正在自动重连…");
+    state.retryTimer = setTimeout(connect, delay * 1000);
+  }
+
+  function handle(type, data) {
+    switch (type) {
+      case 'pending':
+        setStatus(t("等待主机确认"), 'warn');
+        showOverlay(t("等待主机确认"), t("已向主机发送加入请求，请在主机 App 上点击“同意”"), { spinner: true });
+        break;
+      case 'welcome':
+        state.token = data.token;
+        state.self = data.self;
+        state.joined = true;
+        state.retry = 0;
+        state.closedByHost = false;
+        els.title.textContent = data.host && data.host.name ? data.host.name : t("局域网互传");
+        $('sidebarTitle').textContent = els.title.textContent;
+        document.title = els.title.textContent + t(" · 局域网互传");
+        setStatus(t("已连接"), 'ok');
+        els.banner.hidden = true;
+        hideOverlay();
+        setEnabled(true);
+        break;
+      case 'rejected':
+        state.rejected = true;
+        setStatus(t("已被拒绝"), 'bad');
+        setEnabled(false);
+        showOverlay(t("无法加入会话"), (data && diagnostic(data.reason)) || t("主机拒绝了你的加入请求"), { button: true });
+        break;
+      case 'peers':
+        renderPeers(Array.isArray(data) ? data : []);
+        break;
+      case 'history':
+        state.messages = []; state.ids = {};
+        (Array.isArray(data) ? data : []).forEach(addMessage);
+        renderAll();
+        scrollBottom();
+        break;
+      case 'message':
+        var stick = atBottom() || (state.self && data && data.sender && data.sender.id === state.self.id);
+        if (addMessage(data)) { renderAll(); if (stick) scrollBottom(); }
+        break;
+      case 'error':
+        if (data && data.message) {
+          if (/结束会话/.test(data.message)) state.closedByHost = true;
+          toast(diagnostic(data.message));
+        }
+        break;
+    }
+  }
+
+  function sendText() {
+    var text = els.input.value.trim();
+    if (!text || !state.ws || !state.joined) return;
+    state.ws.send(JSON.stringify({ type: 'message', data: { text: text } }));
+    els.input.value = '';
+    autosize();
+    els.input.focus();
+  }
+  // ------------------------------------------------------------------ 上传（XHR 显示进度）
+  var uploadQueue = [];
+  var uploading = false;
+
+  function removeUpload(u) {
+    var i = state.uploads.indexOf(u);
+    if (i >= 0) state.uploads.splice(i, 1);
+    var q = uploadQueue.indexOf(u);
+    if (q >= 0) uploadQueue.splice(q, 1);
+    renderAll();
+  }
+
+  function enqueueFiles(fileList) {
+    if (!state.joined) { toast(t("尚未连接到主机")); return; }
+    Array.prototype.forEach.call(fileList, function (file) {
+      var u = { file: file, name: file.name, size: file.size, sent: 0, error: null, xhr: null };
+      state.uploads.push(u);
+      uploadQueue.push(u);
+    });
+    renderAll();
+    scrollBottom();
+    pump();
+  }
+
+  // 逐个上传，避免并发占满局域网带宽。
+  function pump() {
+    if (uploading) return;
+    var u = uploadQueue.shift();
+    if (!u) return;
+    uploading = true;
+    var form = new FormData();
+    form.append('file', u.file, u.name);
+    var xhr = new XMLHttpRequest();
+    u.xhr = xhr;
+    xhr.open('POST', '/api/upload?name=' + encodeURIComponent(u.name) + '&token=' + encodeURIComponent(state.token || ''));
+    var lastRender = 0;
+    xhr.upload.onprogress = function (ev) {
+      if (!ev.lengthComputable) return;
+      u.sent = Math.min(ev.loaded, u.size);
+      var now = Date.now();
+      if (now - lastRender > 100) { lastRender = now; renderAll(); }
+    };
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var m = null;
+        try { m = JSON.parse(xhr.responseText); } catch (e) { /* 以 WS 广播为准 */ }
+        removeUpload(u);
+        if (m && addMessage(m)) { renderAll(); scrollBottom(); }
+      } else {
+        var msg = t("上传失败（HTTP ") + xhr.status + t('）');
+        try { var body = JSON.parse(xhr.responseText); if (body && body.error) msg = diagnostic(body.error); } catch (e) { /* 忽略 */ }
+        u.error = msg;
+        renderAll();
+      }
+      done();
+    };
+    xhr.onerror = function () { u.error = t("网络错误，上传失败"); renderAll(); done(); };
+    xhr.onabort = function () { done(); };
+    function done() { u.xhr = null; uploading = false; pump(); }
+    xhr.send(form);
+  }
+
+  // ------------------------------------------------------------------ 交互
+  function autosize() {
+    els.send.disabled = !state.joined || !els.input.value.trim();
+    els.input.style.height = 'auto';
+    els.input.style.height = Math.min(els.input.scrollHeight, 140) + 'px';
+  }
+
+  els.input.addEventListener('input', autosize);
+  els.input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendText(); }
+  });
+  els.send.addEventListener('click', sendText);
+  els.attach.addEventListener('click', function () { els.file.click(); });
+  els.file.addEventListener('change', function () {
+    if (els.file.files && els.file.files.length) enqueueFiles(els.file.files);
+    els.file.value = '';
+  });
+  function closePeers() {
+    els.peers.classList.remove('show');
+    $('peerBackdrop').classList.remove('show');
+    els.peersBtn.setAttribute('aria-expanded', 'false');
+    els.peersBtn.focus();
+  }
+  els.peersBtn.addEventListener('click', function () {
+    var open = els.peers.classList.toggle('show');
+    $('peerBackdrop').classList.toggle('show', open);
+    els.peersBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) $('peerClose').focus();
+  });
+  $('peerClose').addEventListener('click', closePeers);
+  $('peerBackdrop').addEventListener('click', closePeers);
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && els.peers.classList.contains('show')) closePeers();
+  });
+  els.rename.addEventListener('click', function () {
+    $('nameInput').value = myName;
+    $('nameDialog').showModal();
+    $('nameInput').focus();
+    $('nameInput').select();
+  });
+  $('nameCancel').addEventListener('click', function () { $('nameDialog').close(); });
+  $('nameForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+    var name = $('nameInput').value.trim().slice(0, 32);
+    if (!name) { $('nameInput').focus(); return; }
+    $('nameDialog').close();
+    if (name === myName) return;
+    myName = name;
+    storageSet('lanchat.name', name);
+    toast(t("名称已修改，重新连接后生效"));
+    if (state.ws) state.ws.close();
+  });
+  els.overlayBtn.addEventListener('click', function () {
+    state.rejected = false; state.retry = 0;
+    connect();
+  });
+
+  // 拖拽上传：dragenter/dragleave 计数，避免子元素触发闪烁。
+  var dragDepth = 0;
+  function hasFiles(e) {
+    return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types || [], 'Files') >= 0;
+  }
+  window.addEventListener('dragenter', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth++;
+    if (state.joined) els.drop.hidden = false;
+  });
+  window.addEventListener('dragover', function (e) { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', function (e) {
+    if (!hasFiles(e)) return;
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) els.drop.hidden = true;
+  });
+  window.addEventListener('drop', function (e) {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; els.drop.hidden = true;
+    if (e.dataTransfer.files && e.dataTransfer.files.length) enqueueFiles(e.dataTransfer.files);
+  });
+  // 支持直接粘贴截图等文件。
+  els.input.addEventListener('paste', function (e) {
+    var files = e.clipboardData && e.clipboardData.files;
+    if (files && files.length) { e.preventDefault(); enqueueFiles(files); }
+  });
+
+  renderAll();
+  connect();
+})();
+</script>
+</body>
+</html>

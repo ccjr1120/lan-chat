@@ -1,0 +1,5 @@
+"CFBundleDisplayName" = "LAN Chat";
+"CFBundleName" = "LAN Chat";
+"NSLocalNetworkUsageDescription" = "LAN Chat uses the local network to discover nearby devices and transfer messages and files.";
+"NSCameraUsageDescription" = "Take photos to share with other devices.";
+"NSPhotoLibraryUsageDescription" = "Choose photos and videos to share with other devices.";
