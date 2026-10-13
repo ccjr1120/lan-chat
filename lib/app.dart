@@ -20,11 +20,18 @@ class LanChatApp extends StatelessWidget {
     listenable: storage.settings,
     builder: (context, _) {
       final mode = ThemeMode.values.byName(storage.settings.themeMode);
+      final localeCode = storage.settings.locale;
+      final locale = localeCode == 'system' ? null : Locale(localeCode);
       return AppPreferences(
         themeMode: mode,
         onThemeChanged: (value) =>
             unawaited(storage.settings.setThemeMode(value.name)),
+        locale: locale,
+        onLocaleChanged: (value) => unawaited(
+          storage.settings.setLocale(value?.languageCode ?? 'system'),
+        ),
         child: MaterialApp(
+          locale: locale,
           onGenerateTitle: (context) => context.l10n.appName,
           debugShowCheckedModeBanner: false,
           theme: buildAppTheme(),

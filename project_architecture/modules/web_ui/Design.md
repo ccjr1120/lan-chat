@@ -18,11 +18,13 @@
 
 - `localStorage['lanchat.deviceId']`：首次访问时生成 UUID，用于主机识别同一浏览器（需确认模式下，重连不会再次弹窗）。
 - `localStorage['lanchat.name']`：可修改的显示名，默认是“系统 浏览器 ID 前 4 位”。
+- `localStorage['lanchat.theme']`：system / light / dark，缺省 system；head 内联脚本在样式解析前写入 `<html data-theme>`，避免闪烁。
+- `localStorage['lanchat.language']`：system / zh-CN / en，缺省 system。
 
 ## 依赖关系
 
 - 通过协议依赖 `server`（`/ws`、`/api/upload`、`/api/files/<id>`）。
-- 视觉规范与 `lib/ui/theme.dart` 一致（`:root` 与 `prefers-color-scheme: dark` CSS 变量），随系统明暗实时切换；除基础语义色外，包含派生 token `--primary-2`（与 App `primaryGradient` 渐变末色一致：light `#4A76FF` / dark `#6C8CFF`）与 `--glow`（primary 6–8% 透明度光晕色，对应 App `glow`），双端色值须逐一保持一致。
+- 视觉规范与 `lib/ui/theme.dart` 一致（`:root` 与 `prefers-color-scheme: dark` CSS 变量），默认随系统明暗实时切换，`data-theme=light|dark` 时固定对应配色；除基础语义色外，包含派生 token `--primary-2`（与 App `primaryGradient` 渐变末色一致：light `#4A76FF` / dark `#6C8CFF`）与 `--glow`（primary 6–8% 透明度光晕色，对应 App `glow`），双端色值须逐一保持一致。
 
 ## 视觉与动效
 
@@ -35,4 +37,4 @@
 
 ## 中英文本地化
 
-单 HTML 内联英文词典与 t()，中文作为资源键，按 navigator.languages 中首个支持的 en / zh 选择语言，其他语言回退英文。translatePage 处理静态文本和 title / aria-label / placeholder，动态状态、平台标签、文件操作与错误提示复用词典；日期按当前浏览器语言格式化。不翻译用户消息、文件名或设备名，不增加依赖、外部资源或协议字段。
+单 HTML 内联英文词典与 t()，中文作为资源键；语言默认按 navigator.languages 中首个支持的 en / zh 选择（其他语言回退英文，`languagechange` 时同步），设置菜单可固定为 zh-CN / en。启动时记录静态文本与 title / aria-label / placeholder 的中文原文，translatePage 据此双向翻译；状态、横幅、遮罩文案以函数保存，切换语言时与标题、在线设备、消息列表一起重新渲染，不刷新页面、不断开 WebSocket。动态状态、平台标签、文件操作与错误提示复用词典；日期按当前浏览器语言格式化。不翻译用户消息、文件名或设备名，不增加依赖、外部资源或协议字段。

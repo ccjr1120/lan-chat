@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../core/models/access_mode.dart';
 
-/// 本机设置：设备 ID、设备名、主机访问模式。保存为 `settings.json`。
+/// 本机设置：设备 ID、设备名、主机访问模式、主题与界面语言。保存为 `settings.json`。
 class SettingsStore extends ChangeNotifier {
   SettingsStore._(
     this._file,
@@ -14,18 +14,26 @@ class SettingsStore extends ChangeNotifier {
     this._deviceName,
     this._accessMode,
     this._themeMode,
+    this._locale,
   );
+
+  static const themeModes = ['system', 'light', 'dark'];
+
+  /// 界面语言：system 跟随系统，其余为 AppLocalizations 支持的语言代码。
+  static const locales = ['system', 'zh', 'en'];
 
   final File _file;
   final String _deviceId;
   String _deviceName;
   AccessMode _accessMode;
   String _themeMode;
+  String _locale;
 
   String get deviceId => _deviceId;
   String get deviceName => _deviceName;
   AccessMode get accessMode => _accessMode;
   String get themeMode => _themeMode;
+  String get locale => _locale;
 
   static Future<SettingsStore> load(File file) async {
     Map<String, dynamic> json = const {};
@@ -45,9 +53,10 @@ class SettingsStore extends ChangeNotifier {
           ? json['deviceName'] as String
           : _defaultDeviceName(id),
       AccessMode.parse(json['accessMode']),
-      const ['system', 'light', 'dark'].contains(json['themeMode'])
+      themeModes.contains(json['themeMode'])
           ? json['themeMode'] as String
           : 'system',
+      locales.contains(json['locale']) ? json['locale'] as String : 'system',
     );
     if (json.isEmpty) await store._save();
     return store;
@@ -69,11 +78,15 @@ class SettingsStore extends ChangeNotifier {
   }
 
   Future<void> setThemeMode(String mode) async {
-    if (!const ['system', 'light', 'dark'].contains(mode) ||
-        mode == _themeMode) {
-      return;
-    }
+    if (!themeModes.contains(mode) || mode == _themeMode) return;
     _themeMode = mode;
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> setLocale(String locale) async {
+    if (!locales.contains(locale) || locale == _locale) return;
+    _locale = locale;
     notifyListeners();
     await _save();
   }
@@ -86,6 +99,7 @@ class SettingsStore extends ChangeNotifier {
         'deviceName': _deviceName,
         'accessMode': _accessMode.name,
         'themeMode': _themeMode,
+        'locale': _locale,
       }),
     );
   }
