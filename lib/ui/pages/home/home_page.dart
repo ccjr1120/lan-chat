@@ -13,7 +13,7 @@ import '../../theme.dart';
 import '../../widgets/host_address_card.dart';
 import '../../widgets/join_request_dialog.dart';
 import '../../widgets/motion.dart';
-import '../../widgets/theme_menu.dart';
+import '../../widgets/settings_menu.dart';
 import '../../widgets/workspace_panel.dart';
 import '../chat/chat_page.dart';
 
@@ -259,7 +259,7 @@ class _HomePageState extends State<HomePage> {
               title: Text(
                 joining ? context.l10n.joinSession : context.l10n.appName,
               ),
-              actions: const [ThemeMenu(), SizedBox(width: 8)],
+              actions: const [SettingsMenu(), SizedBox(width: 8)],
             ),
       body: WorkspaceBackground(
         child: SafeArea(
@@ -299,7 +299,7 @@ class _HomePageState extends State<HomePage> {
                                   ).textTheme.headlineMedium,
                                 ),
                               ),
-                              if (macOS) const ThemeMenu(),
+                              if (macOS) const SettingsMenu(),
                             ],
                           ),
                         ),

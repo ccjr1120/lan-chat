@@ -6,7 +6,8 @@
 
 ## 页面结构
 
-- 头部：主机名、连接状态圆点和文字、「我的名称」（原生 dialog 中编辑，保存后重连生效）、「在线 N」（窄屏时切换在线设备侧栏）。
+- 头部：主机名、连接状态圆点和文字、「我的名称」（原生 dialog 中编辑，保存后重连生效）、「在线 N」（窄屏时切换在线设备侧栏）、设置按钮（弹出主题 / 语言两组分段单选，点击外部或 Escape 关闭并归还焦点）。
+- 对齐：头部、横幅、消息列表与输入栏共用 `--gutter` 水平边距（宽屏为内容列 880 居中、最小 28；窄屏 16），左右边缘逐一对齐；宽屏侧栏品牌行与头部同高（`--header-h`）并延续其底部分隔线。
 - 断线横幅：自动重连提示。
 - 消息列表（`role=log`，`aria-live=polite`）：主题文字气泡，5 分钟间隔时间分组和连续发送者合并；独立主题 surface 文件卡片（点击下载，`download=1`）；图片额外显示预览，点击在新标签页打开。
 - 在线设备侧栏：宽度 ≥ 900 时左侧常驻（256px），含品牌、当前会话和在线设备；窄屏由顶部在线数量打开右侧浮层，支持遮罩、关闭按钮及 Escape。
@@ -40,7 +41,7 @@ WS 事件：`welcome`（token、self、host）、`history`、`message`、`peers`
 
 ## 视觉与资源
 
-采用与 App 一致的明暗主题和蓝色强调，通过 `prefers-color-scheme` 跟随系统外观实时切换（颜色属性 250ms 过渡），原生控件声明 `color-scheme: light dark`；消息区域最大宽度约 880，响应式输入栏和文件卡片适配窄屏。视觉层次：body 顶部 `--glow` 径向光晕（终止色与背景一致），主按钮 / 发送按钮 / 自己的文字气泡使用 `--primary`→`--primary-2` 渐变（自气泡文字为 `--on-primary`，选区用 `--self-selection` 保证可见；文件卡与上传卡保持 surface 底色），主按钮与发送按钮禁用时降级为中性色，输入栏聚焦时边框高亮并带 `--glow` 外环，标题负字距微调。动效统一使用 `--ease`（easeOutCubic，与 App `AppMotion` 一致）：列表末条消息 fade + 上移入场（`renderAll` 会整体重建 DOM，故仅末条动画且排除含进度条的上送行，避免进度刷新重播）、文件卡与按钮 hover 微提升（仅 `hover: hover` 设备）、banner / toast / 遮罩 / dialog 入场过渡。`prefers-reduced-motion` 时全部动画与过渡禁用（含转圈与进度条）；交互控件使用 `:focus-visible` 焦点环与可访问名称。Lucide SVG 内联，无 CDN 和外部字体。WebSocket/HTTP、上传队列、取消上传、粘贴文件与退避重连逻辑沿用现有实现。
+采用与 App 一致的明暗主题和蓝色强调，默认通过 `prefers-color-scheme` 跟随系统外观实时切换，设置菜单可固定浅色 / 深色（颜色属性 250ms 过渡），原生控件 `color-scheme` 随之变化；消息区域最大宽度约 880，响应式输入栏和文件卡片适配窄屏。视觉层次：body 顶部 `--glow` 径向光晕（终止色与背景一致），主按钮 / 发送按钮 / 自己的文字气泡使用 `--primary`→`--primary-2` 渐变（自气泡文字为 `--on-primary`，选区用 `--self-selection` 保证可见；文件卡与上传卡保持 surface 底色），主按钮与发送按钮禁用时降级为中性色，输入栏聚焦时边框高亮并带 `--glow` 外环，标题负字距微调。动效统一使用 `--ease`（easeOutCubic，与 App `AppMotion` 一致）：列表末条消息 fade + 上移入场（`renderAll` 会整体重建 DOM，故仅末条动画且排除含进度条的上送行，避免进度刷新重播）、文件卡与按钮 hover 微提升（仅 `hover: hover` 设备）、banner / toast / 遮罩 / dialog 入场过渡。`prefers-reduced-motion` 时全部动画与过渡禁用（含转圈与进度条）；交互控件使用 `:focus-visible` 焦点环与可访问名称。Lucide SVG 内联，无 CDN 和外部字体。WebSocket/HTTP、上传队列、取消上传、粘贴文件与退避重连逻辑沿用现有实现。
 
 ## 本地化
 

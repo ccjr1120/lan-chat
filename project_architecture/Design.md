@@ -126,11 +126,11 @@ token 通过 `?token=` 或 `Authorization: Bearer` 传递。它只在对应 WS �
 
 ## App 主题、系统标题与桌面工作区
 
-App 在 `lib/app.dart` 配置浅色 / 深色 ThemeData，主题菜单支持跟随系统、浅色、深色，初始默认跟随系统。选项通过 SettingsStore 的 `themeMode` 持久化，旧设置文件缺失该字段时回退为 system；MaterialApp 与 AppPreferences 监听设置更新。`lib/ui/theme.dart` 的 AppColors ThemeExtension 提供语义配色（含 primaryGradient / glow 派生强调 token），首页、聊天页及共享组件从当前 BuildContext 读取；网页 CSS 同步明暗变量（含 `--primary-2`、`--glow`）并通过 prefers-color-scheme 跟随浏览器系统外观。
+App 在 `lib/app.dart` 配置浅色 / 深色 ThemeData。右上角共享设置菜单（SettingsMenu）提供主题（跟随系统 / 浅色 / 深色）与界面语言（跟随系统 / 简体中文 / English）两组选项，初始均跟随系统。选项通过 SettingsStore 的 `themeMode`、`locale` 持久化，旧设置文件缺失字段时回退为 system；MaterialApp（themeMode、locale）与 AppPreferences 监听设置更新。`lib/ui/theme.dart` 的 AppColors ThemeExtension 提供语义配色（含 primaryGradient / glow 派生强调 token），首页、聊天页及共享组件从当前 BuildContext 读取；网页 CSS 同步明暗变量（含 `--primary-2`、`--glow`），默认通过 prefers-color-scheme 跟随浏览器系统外观，头部设置菜单可固定浅色 / 深色（`<html data-theme>`）。
 
 首页宽度 ≥ 900 时采用最大宽度 1440 的操作双栏：左侧为创建 / 运行中的会话面板，右侧为设备身份和加入入口，比例 7:4、间距 24；其他宽度使用最大宽度 620 的单列。独立宣传 banner 与桌面统计卡移除，连接方式示意嵌入创建会话卡片。会话页仍在 900 / 1280 宽度分别显示在线设备栏与最近文件栏，辅助信息来自现有 HostSession / ChatSession。
 
-首页与聊天页共享 WorkspaceBackground：background 纯色为底，顶部叠加极淡 primary 光晕（glow token 的径向渐变，终止色为 background），基底与 macOS 标题栏背景保持一致，衔接无缝。macOS 首页在所有窗口宽度均使用原生产品标题，不显示重复 AppBar；页面右上保留主题菜单，加入模式在正文提供返回入口。MainFlutterWindow 通过 `lanchat/window` MethodChannel 的 `setStyle` 接收本地化产品名与 themeMode，原生标题栏透明并与 Flutter 背景一致；system 时继承系统 appearance，light / dark 时设置对应 NSAppearance。effectiveAppearance 观察负责系统外观变化和背景更新。原生窗口按钮与标题区域保留。
+首页与聊天页共享 WorkspaceBackground：background 纯色为底，顶部叠加极淡 primary 光晕（glow token 的径向渐变，终止色为 background），基底与 macOS 标题栏背景保持一致，衔接无缝。macOS 首页在所有窗口宽度均使用原生产品标题，不显示重复 AppBar；页面右上保留设置菜单，加入模式在正文提供返回入口。MainFlutterWindow 通过 `lanchat/window` MethodChannel 的 `setStyle` 接收本地化产品名与 themeMode，原生标题栏透明并与 Flutter 背景一致；system 时继承系统 appearance，light / dark 时设置对应 NSAppearance。effectiveAppearance 观察负责系统外观变化和背景更新。原生窗口按钮与标题区域保留。
 
 App 微动效统一为 200ms easeOutCubic，集中在 `lib/ui/widgets/motion.dart`（AppMotion 常量、FadeSlideIn 入场、HoverLift 桌面悬停微提升、GradientFilledButton 渐变主按钮），不新增依赖；主题切换为 250ms 淡入淡出（MaterialApp themeAnimationDuration/Curve）。AppColors 的派生强调 token：primaryGradient（light `#3458E8→#4A76FF`，dark `#8BA4FF→#6C8CFF`）用于主操作按钮与自己发送的气泡，glow（primary 6–8% 透明度）用于工作区顶部光晕；网页端以 `--primary-2`、`--glow` CSS 变量与之一致。
 
@@ -140,6 +140,6 @@ App 使用 Flutter SDK 的 flutter_localizations 与 intl 0.20.3，`lib/l10n/app
 
 macOS / iOS 使用 en.lproj 与 zh-Hans.lproj 的 InfoPlist.strings 本地化显示名与权限说明；macOS MainMenu.strings 同步菜单标题，Xcode 注册语言资源。Android 使用 values / values-zh 的 app_name 资源。产品中文名为“局域网互传”，英文名为“LAN Chat”；编译产物和 Bundle ID 保持原有稳定标识。原生资源变更需完整重启 App 才能查看，热重载不更新它们。
 
-网页端保持单 HTML 离线自包含，内联中英文词典，按 navigator.languages 选择支持语言，其他语言回退英文；静态标签、可访问名称、状态提示与日期一起本地化。协议与上传 / 下载逻辑继续沿用现有实现。
+网页端保持单 HTML 离线自包含，内联中英文词典，默认按 navigator.languages 选择支持语言（其他语言回退英文），也可在头部设置菜单固定为中文 / 英文并即时重渲染，不刷新页面、不断开连接；静态标签、可访问名称、状态提示与日期一起本地化。协议与上传 / 下载逻辑继续沿用现有实现。
 
 参考：[Flutter 官方本地化](https://docs.flutter.dev/ui/internationalization)。具体实现及影响见 app_ui、storage、web_ui 模块文档。

@@ -1,0 +1,108 @@
+import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
+import '../../l10n/ui_strings.dart';
+import '../theme.dart';
+import '../theme_controller.dart';
+
+/// 首页 / 聊天页右上角共享设置入口：主题与界面语言。
+///
+/// 选项通过 [AppPreferences] 写回 SettingsStore，立即生效并持久化。
+class SettingsMenu extends StatelessWidget {
+  const SettingsMenu({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final preferences = AppPreferences.of(context);
+    final l10n = context.l10n;
+    String themeLabel(ThemeMode mode) => switch (mode) {
+      ThemeMode.system => l10n.themeSystem,
+      ThemeMode.light => l10n.themeLight,
+      ThemeMode.dark => l10n.themeDark,
+    };
+    IconData themeIcon(ThemeMode mode) => switch (mode) {
+      ThemeMode.system => LucideIcons.monitor,
+      ThemeMode.light => LucideIcons.sun,
+      ThemeMode.dark => LucideIcons.moon,
+    };
+    // 语言名称使用各自语言书写，便于在不熟悉的界面语言下找到。
+    final languages = <(Locale?, String)>[
+      (null, l10n.languageSystem),
+      (const Locale('zh'), '简体中文'),
+      (const Locale('en'), 'English'),
+    ];
+    final currentLanguage = preferences.locale?.languageCode;
+
+    PopupMenuEntry<VoidCallback> header(IconData icon, String text) =>
+        PopupMenuItem<VoidCallback>(
+          enabled: false,
+          height: 36,
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: AppColors.of(context).textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.of(context).textSecondary,
+                ),
+              ),
+            ],
+          ),
+        );
+
+    PopupMenuEntry<VoidCallback> option({
+      required String label,
+      required bool selected,
+      required VoidCallback onSelected,
+      IconData? icon,
+    }) => PopupMenuItem<VoidCallback>(
+      value: onSelected,
+      child: Semantics(
+        selected: selected,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 24,
+              child: icon == null ? null : Icon(icon, size: 18),
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
+            if (selected)
+              Icon(
+                LucideIcons.check,
+                size: 18,
+                color: AppColors.of(context).primary,
+              ),
+          ],
+        ),
+      ),
+    );
+
+    return PopupMenuButton<VoidCallback>(
+      tooltip: l10n.settings,
+      icon: const Icon(LucideIcons.settings2, size: 21),
+      onSelected: (apply) => apply(),
+      itemBuilder: (context) => [
+        header(LucideIcons.sunMoon, l10n.theme),
+        for (final mode in ThemeMode.values)
+          option(
+            label: themeLabel(mode),
+            icon: themeIcon(mode),
+            selected: mode == preferences.themeMode,
+            onSelected: () => preferences.onThemeChanged(mode),
+          ),
+        const PopupMenuDivider(),
+        header(LucideIcons.languages, l10n.language),
+        for (final (locale, label) in languages)
+          option(
+            label: label,
+            selected: locale?.languageCode == currentLanguage,
+            onSelected: () => preferences.onLocaleChanged(locale),
+          ),
+      ],
+    );
+  }
+}

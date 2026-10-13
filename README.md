@@ -99,7 +99,7 @@ App 首页点击「创建会话」后会显示：
 
 ### macOS（`macos/Runner/*.entitlements`）
 
-原生窗口使用本地化产品名（中文「局域网互传」、英文「LAN Chat」）。MainFlutterWindow 通过 MethodChannel 同步 App 主题菜单，透明标题栏与页面背景统一，保留原生窗口按钮。macOS 首页所有窗口宽度均不重复显示产品标题导航栏。InfoPlist.strings / MainMenu.strings 已注册中英文资源；原生修改需完整重新运行 App，热重载无法更新。
+原生窗口使用本地化产品名（中文「局域网互传」、英文「LAN Chat」）。MainFlutterWindow 通过 MethodChannel 同步 App 主题设置，透明标题栏与页面背景统一，保留原生窗口按钮。macOS 首页所有窗口宽度均不重复显示产品标题导航栏。InfoPlist.strings / MainMenu.strings 已注册中英文资源；原生修改需完整重新运行 App，热重载无法更新。
 
 - `com.apple.security.network.server` / `network.client`；
 - `com.apple.security.files.user-selected.read-write`、`files.downloads.read-write`；
@@ -124,7 +124,7 @@ App 首页点击「创建会话」后会显示：
 
 ### UI 与第三方库
 
-首页采用创建 / 加入会话入口，桌面首页在宽度 ≥ 900 时使用创建 / 加入操作双栏（最大宽度 1440），窄屏使用单列，连接方式示意放在创建会话卡片中，宽会话窗口显示在线设备、消息与最近文件三栏；App 与网页使用统一明暗配色。App 右上角主题菜单提供跟随系统 / 浅色 / 深色，初始默认跟随系统并保存选择；网页跟随浏览器系统外观。图标采用 `lucide_icons_flutter 3.1.24` 与内联 `lucide-static 1.54.0` SVG，所有 UI 资源离线可用。文件选择、二维码、传输和系统分享继续复用现有库。调查结论与取舍见 [架构文档的 UI 第三方库选型](project_architecture/Design.md)。
+首页采用创建 / 加入会话入口，桌面首页在宽度 ≥ 900 时使用创建 / 加入操作双栏（最大宽度 1440），窄屏使用单列，连接方式示意放在创建会话卡片中，宽会话窗口显示在线设备、消息与最近文件三栏；App 与网页使用统一明暗配色。App 右上角设置菜单提供主题（跟随系统 / 浅色 / 深色）与语言（跟随系统 / 简体中文 / English），初始默认跟随系统并保存选择；网页头部设置按钮提供同样两组选项，保存在浏览器本地。图标采用 `lucide_icons_flutter 3.1.24` 与内联 `lucide-static 1.54.0` SVG，所有 UI 资源离线可用。文件选择、二维码、传输和系统分享继续复用现有库。调查结论与取舍见 [架构文档的 UI 第三方库选型](project_architecture/Design.md)。
 
 ### 语言
 

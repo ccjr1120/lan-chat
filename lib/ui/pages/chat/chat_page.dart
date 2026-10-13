@@ -18,7 +18,7 @@ import '../../theme.dart';
 import '../../widgets/host_address_card.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/motion.dart';
-import '../../widgets/theme_menu.dart';
+import '../../widgets/settings_menu.dart';
 import '../../widgets/workspace_panel.dart';
 
 /// 聊天页：主机与客户端共用，通过 [ChatSession] 区分行为。
@@ -263,7 +263,7 @@ class _ChatPageState extends State<ChatPage> {
               ],
             ),
             actions: [
-              const ThemeMenu(),
+              const SettingsMenu(),
               IconButton(
                 tooltip: s.isHost
                     ? context.l10n.sessionSettings

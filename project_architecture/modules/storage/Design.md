@@ -9,7 +9,7 @@
 | 文件 | 说明 |
 | --- | --- |
 | `lib/storage/app_storage.dart` | `AppStorage.open()`：解析目录，创建三个 store（启动时调用一次） |
-| `lib/storage/settings_store.dart` | `SettingsStore`（ChangeNotifier）：`deviceId`（首次生成 UUID）、`deviceName`、`accessMode`、`themeMode` → `settings.json` |
+| `lib/storage/settings_store.dart` | `SettingsStore`（ChangeNotifier）：`deviceId`（首次生成 UUID）、`deviceName`、`accessMode`、`themeMode`、`locale` → `settings.json` |
 | `lib/storage/history_store.dart` | `HistoryStore`：`history.jsonl`，每行一条 `ChatMessage`，只追加，写入串行化，坏行跳过 |
 | `lib/storage/file_store.dart` | `FileStore`：`files/<fileId>/<fileName>`，先写 `.part` 再 `commit` 改名；文件 ID 和文件名经过清洗，防止路径穿越 |
 
@@ -38,4 +38,4 @@
 
 ## 主题选项兼容性
 
-settings.json 新增 themeMode 字符串，仅接受 system / light / dark，缺失或非法值回退 system；旧设备身份、名称与访问方式保持原值。setThemeMode 校验选项后通知 UI 并保存。语言不单独持久化，默认由 UI 跟随系统 locale。
+settings.json 新增 themeMode 字符串，仅接受 system / light / dark，缺失或非法值回退 system；旧设备身份、名称与访问方式保持原值。setThemeMode 校验选项后通知 UI 并保存。locale 字符串仅接受 system / zh / en，缺失或非法值回退 system（跟随系统 locale）；setLocale 校验后通知 UI 并保存。

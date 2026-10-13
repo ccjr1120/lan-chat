@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>局域网互传</title>
+<script>
+  // 在样式解析前应用已保存的主题，避免页面先以系统外观闪烁一次。
+  try { var savedTheme = localStorage.getItem('lanchat.theme'); if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme; } catch (e) { /* 隐私模式 */ }
+</script>
 <style>
   /* AppColors in lib/ui/theme.dart; all assets are bundled for offline use. */
   :root {
@@ -12,18 +16,32 @@
     --text2:#667085; --divider:#E4E7EC; --success:#16865C; --warning:#9A6700; --danger:#D92D20;
     --self:#EEF2FF; --self-border:#E0E7FF; --on-primary:#FFFFFF; --primary-hover:#2946C0;
     --warning-bg:#FFF7E6; --drop-bg:rgba(238,242,255,.96); --toast-text:#FFFFFF; --sidebar:256px;
+    /* 主栏统一水平边距：头部、横幅、消息列表与输入栏共用，内容列最大 880 居中，左右边缘逐一对齐。 */
+    --content:880px; --gutter:max(28px,calc((100% - var(--content))/2)); --header-h:76px;
     --self-selection:rgba(255,255,255,.32); --ease:cubic-bezier(.33,1,.68,1); /* easeOutCubic，对应 AppMotion */
+    --card-hover-shadow:rgba(24,34,48,.18); --menu-shadow:0 12px 32px -12px rgba(24,34,48,.24);
     color-scheme:light dark;
   }
+  /* 主题：默认跟随系统；设置菜单选择浅色 / 深色时在 <html> 写入 data-theme 覆盖。 */
+  :root[data-theme=light] { color-scheme:light; }
   @media (prefers-color-scheme:dark) {
-    :root {
+    :root:not([data-theme=light]) {
       --primary:#8BA4FF; --primary-2:#6C8CFF; --glow:rgba(139,164,255,.08);
       --bg:#11151C; --surface:#1B222D; --text:#EDF1F7;
       --text2:#A4AFC0; --divider:#323D4D; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
       --self:#273453; --self-border:#3C486C; --on-primary:#11151C; --primary-hover:#A7B9FF;
       --warning-bg:#2D291F; --drop-bg:rgba(39,52,83,.96); --toast-text:#11151C;
-      --self-selection:rgba(17,21,28,.32);
+      --self-selection:rgba(17,21,28,.32); --card-hover-shadow:rgba(0,0,0,.55); --menu-shadow:0 12px 32px -12px rgba(0,0,0,.6);
     }
+  }
+  :root[data-theme=dark] {
+    --primary:#8BA4FF; --primary-2:#6C8CFF; --glow:rgba(139,164,255,.08);
+    --bg:#11151C; --surface:#1B222D; --text:#EDF1F7;
+    --text2:#A4AFC0; --divider:#323D4D; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
+    --self:#273453; --self-border:#3C486C; --on-primary:#11151C; --primary-hover:#A7B9FF;
+    --warning-bg:#2D291F; --drop-bg:rgba(39,52,83,.96); --toast-text:#11151C;
+    --self-selection:rgba(17,21,28,.32); --card-hover-shadow:rgba(0,0,0,.55); --menu-shadow:0 12px 32px -12px rgba(0,0,0,.6);
+    color-scheme:dark;
   }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -32,7 +50,7 @@
     color:var(--text); font-size:15px; line-height:1.6;
     /* 光晕叠在 --bg 之上并淡出到 transparent，合成后的终止色即 --bg；不直接写 --bg，以保留主题切换时背景色的过渡。 */
     background:radial-gradient(90% 420px at 50% -140px,var(--glow),transparent 75%) no-repeat fixed, var(--bg);
-    display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); grid-template-rows:76px auto minmax(0,1fr) auto; }
+    display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); grid-template-rows:var(--header-h) auto minmax(0,1fr) auto; }
   body,header,footer,#peers,.session-card,.bubble,#overlay .card,dialog,#banner,#toast,.brand-mark,.empty .empty-icon,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
   button,textarea { font:inherit; }
   button { cursor:pointer; }
@@ -40,7 +58,7 @@
   button:focus-visible,textarea:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
   .ui-icon { width:22px; height:22px; flex:none; vertical-align:middle; }
-  header { grid-column:2; grid-row:1; display:flex; align-items:center; gap:16px; padding:16px 28px; border-bottom:1px solid var(--divider); background:var(--surface); }
+  header { grid-column:2; grid-row:1; display:flex; align-items:center; gap:12px; padding:0 var(--gutter); border-bottom:1px solid var(--divider); background:var(--surface); }
   header .title { flex:1; min-width:0; }
   header h1 { margin:0; font-size:18px; font-weight:650; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header .sub { font-size:12px; color:var(--text2); margin-top:3px; }
@@ -53,9 +71,10 @@
   .btn.primary:disabled,.icon-btn.send:disabled { background:var(--divider); color:var(--text2); opacity:1; }
   #peersBtn { display:none; }
   main { display:contents; }
-  #list { grid-column:2; grid-row:3; min-height:0; overflow-y:auto; padding:24px max(20px,calc((100% - 880px)/2)); overscroll-behavior:contain; }
-  #peers { grid-column:1; grid-row:1 / 5; min-height:0; background:var(--surface); border-right:1px solid var(--divider); padding:28px 20px; overflow:auto; display:flex; flex-direction:column; }
-  .brand { display:flex; align-items:center; gap:10px; font-size:17px; font-weight:700; margin-bottom:36px; }
+  #list { grid-column:2; grid-row:3; min-height:0; overflow-y:auto; padding:24px var(--gutter); overscroll-behavior:contain; }
+  #peers { grid-column:1; grid-row:1 / 5; min-height:0; background:var(--surface); border-right:1px solid var(--divider); padding:0 20px 28px; overflow:auto; display:flex; flex-direction:column; }
+  /* 品牌行与右侧头部同高并延续其底部分隔线，两侧标题垂直居中对齐。 */
+  .brand { display:flex; align-items:center; gap:10px; flex:none; height:var(--header-h); margin:0 -20px 28px; padding:0 20px; border-bottom:1px solid var(--divider); font-size:17px; font-weight:700; }
   .brand-mark { display:grid; place-items:center; width:40px; height:40px; color:var(--primary); background:var(--self); border-radius:12px; }
   .sidebar-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
   #sidebarTitle { font-size:15px; font-weight:600; overflow-wrap:anywhere; }
@@ -91,7 +110,7 @@
   .msg.self .upload.err { border-color:var(--danger); }
   .upload .status { color:var(--text2); font-size:12px; margin-top:6px; }
   .upload.err .status { color:var(--danger); }
-  footer { grid-column:2; grid-row:4; background:var(--surface); border-top:1px solid var(--divider); padding:16px max(20px,calc((100% - 880px)/2)); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
+  footer { grid-column:2; grid-row:4; background:var(--surface); border-top:1px solid var(--divider); padding:16px var(--gutter); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
   .composer { display:flex; align-items:flex-end; gap:4px; padding:6px; background:var(--bg); border:1px solid var(--divider); border-radius:16px;
     transition:background-color .25s ease,border-color .2s var(--ease),box-shadow .2s var(--ease); }
   .composer:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--glow); }
@@ -105,12 +124,9 @@
   @media (hover:hover) {
     .btn:hover:not(:disabled) { background-color:var(--bg); transform:translateY(-1px); }
     .btn.primary:hover:not(:disabled) { filter:brightness(1.07); box-shadow:0 6px 14px -6px var(--primary); }
-    .bubble.file-card:hover { transform:translateY(-1px); box-shadow:0 8px 20px -10px rgba(24,34,48,.18); }
+    .bubble.file-card:hover { transform:translateY(-1px); box-shadow:0 8px 20px -10px var(--card-hover-shadow); }
     .icon-btn:hover:not(:disabled) { background-color:var(--self); color:var(--primary); }
     .icon-btn.send:hover:not(:disabled) { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); filter:brightness(1.07); transform:translateY(-1px); box-shadow:0 6px 14px -6px var(--primary); }
-  }
-  @media (hover:hover) and (prefers-color-scheme:dark) {
-    .bubble.file-card:hover { box-shadow:0 8px 20px -10px rgba(0,0,0,.55); }
   }
   .composer-hint { font-size:11px; color:var(--text2); padding-top:8px; text-align:center; }
   .empty { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 16px; color:var(--text2); }
@@ -133,7 +149,7 @@
   #drop .ui-icon { width:48px; height:48px; }
   #toast { position:fixed; left:50%; bottom:120px; transform:translateX(-50%); max-width:90vw; background:var(--text); color:var(--toast-text); padding:10px 18px; border-radius:12px; font-size:13px; z-index:30; }
   #toast:not([hidden]) { animation:toast-in .2s var(--ease); }
-  #banner { grid-column:2; grid-row:2; background:var(--warning-bg); color:var(--warning); font-size:13px; padding:10px 28px; }
+  #banner { grid-column:2; grid-row:2; background:var(--warning-bg); color:var(--warning); font-size:13px; padding:10px var(--gutter); }
   #banner:not([hidden]) { animation:banner-in .2s var(--ease); }
   dialog { width:min(400px,92vw); border:1px solid var(--divider); border-radius:24px; padding:28px; color:var(--text); background:var(--surface); }
   dialog[open] { animation:dialog-in .2s var(--ease); }
@@ -147,19 +163,37 @@
   .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
   #peerClose { display:none; }
   #peerBackdrop { display:none; }
+  /* 设置菜单：主题与语言，样式与 App SettingsMenu 弹出菜单一致。 */
+  .settings { position:relative; flex:none; }
+  #settingsBtn[aria-expanded=true] { background-color:var(--self); color:var(--primary); }
+  #settingsMenu { position:absolute; right:0; top:calc(100% + 8px); z-index:15; width:min(292px,calc(100vw - 32px)); padding:16px; background:var(--surface); border:1px solid var(--divider); border-radius:16px; box-shadow:var(--menu-shadow); }
+  #settingsMenu:not([hidden]) { animation:dialog-in .2s var(--ease); }
+  #settingsMenu fieldset { border:0; margin:0; padding:0; min-width:0; }
+  #settingsMenu fieldset + fieldset { margin-top:16px; padding-top:16px; border-top:1px solid var(--divider); }
+  #settingsMenu legend { display:flex; align-items:center; gap:8px; padding:0; margin-bottom:10px; font-size:12px; font-weight:600; color:var(--text2); }
+  #settingsMenu legend .ui-icon { width:16px; height:16px; }
+  .segmented { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:4px; padding:4px; background:var(--bg); border:1px solid var(--divider); border-radius:12px; }
+  .segmented label { position:relative; display:flex; align-items:center; justify-content:center; gap:6px; min-height:36px; padding:0 6px; border-radius:9px; font-size:13px; color:var(--text2); cursor:pointer; white-space:nowrap; text-align:center;
+    transition:background-color .2s var(--ease),color .2s var(--ease),box-shadow .2s var(--ease); }
+  .segmented label .ui-icon { width:16px; height:16px; }
+  .segmented input { position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
+  .segmented label:has(input:checked) { background:var(--surface); color:var(--primary); font-weight:600; box-shadow:0 1px 2px rgba(24,34,48,.08); }
+  .segmented label:has(input:focus-visible) { outline:2px solid var(--primary); outline-offset:1px; }
+  @media (hover:hover) { .segmented label:hover:not(:has(input:checked)) { color:var(--text); } }
   @media (max-width:899px) {
-    body { grid-template-columns:minmax(0,1fr); grid-template-rows:72px auto minmax(0,1fr) auto; }
+    :root { --gutter:16px; --header-h:72px; }
+    body { grid-template-columns:minmax(0,1fr); }
     header,#list,footer,#banner { grid-column:1; }
-    header { padding:12px 16px; gap:10px; }
+    header { gap:8px; }
     header h1 { font-size:16px; }
     #peersBtn { display:block; }
     #renameBtn { padding:8px 10px; }
-    #list { padding:16px; }
+    #list { padding:16px var(--gutter); }
     #peers { display:none; }
     #peers.show { display:flex; position:fixed; right:0; top:0; bottom:0; width:min(300px,86vw); z-index:6; border:0; box-shadow:-8px 0 32px rgba(24,34,48,.12); }
-    #peerClose { display:grid; position:absolute; right:10px; top:10px; }
+    #peerClose { display:grid; position:absolute; right:10px; top:calc((var(--header-h) - 44px) / 2); }
     #peerBackdrop.show { display:block; position:fixed; inset:0; z-index:5; border:0; background:rgba(24,34,48,.25); }
-    footer { padding:12px 12px calc(12px + env(safe-area-inset-bottom)); }
+    footer { padding:12px var(--gutter) calc(12px + env(safe-area-inset-bottom)); }
     .composer-hint { display:none; }
     .bubble { max-width:88%; }
     .file { width:270px; gap:10px; }
@@ -228,6 +262,27 @@ SOFTWARE.
   </div>
   <button id="renameBtn" class="btn" type="button" title="修改我的名称">我的名称</button>
   <button id="peersBtn" class="btn" type="button" aria-controls="peers" aria-expanded="false">在线 <span id="peerCount">0</span></button>
+  <div class="settings">
+    <button id="settingsBtn" class="icon-btn" type="button" aria-label="设置" title="设置" aria-haspopup="true" aria-expanded="false" aria-controls="settingsMenu"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5" /><path d="M19 7h-9" /><circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" /></svg></button>
+    <div id="settingsMenu" role="group" aria-label="设置" hidden>
+      <fieldset>
+        <legend><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 3v1" /><path d="M12 20v1" /><path d="M3 12h1" /><path d="M20 12h1" /><path d="m18.364 5.636-.707.707" /><path d="m6.343 17.657-.707.707" /><path d="m5.636 5.636.707.707" /><path d="m17.657 17.657.707.707" /></svg>主题</legend>
+        <div class="segmented">
+          <label><input type="radio" name="theme" value="system"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 12.5-5-5" /><path d="m9.5 12.5 5-5" /><rect width="20" height="14" x="2" y="3" rx="2" /><path d="M12 17v4" /><path d="M8 21h8" /></svg><span>跟随系统</span></label>
+          <label><input type="radio" name="theme" value="light"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg><span>浅色</span></label>
+          <label><input type="radio" name="theme" value="dark"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401" /></svg><span>深色</span></label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 6 6" /><path d="m4 14 6-6 2-3" /><path d="M2 5h12" /><path d="M7 2h1" /><path d="m22 22-5-10-5 10" /><path d="M14 18h6" /></svg>语言</legend>
+        <div class="segmented">
+          <label><input type="radio" name="language" value="system"><span>跟随系统</span></label>
+          <label><input type="radio" name="language" value="zh-CN"><span lang="zh-CN">简体中文</span></label>
+          <label><input type="radio" name="language" value="en"><span lang="en">English</span></label>
+        </div>
+      </fieldset>
+    </div>
+  </div>
 </header>
 <div id="banner" role="status" hidden></div>
 <main>
@@ -350,9 +405,19 @@ SOFTWARE.
 (function () {
   'use strict';
 
-  var preferredLanguages = navigator.languages || [navigator.language || 'en'];
-  var language = preferredLanguages.find(function (value) { return /^(zh|en)(-|$)/i.test(value); }) || 'en';
-  language = /^zh/i.test(language) ? 'zh-CN' : 'en';
+  function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function storageSet(key, v) { try { localStorage.setItem(key, v); } catch (e) { /* 隐私模式 */ } }
+
+  // 语言：system 按 navigator.languages 中首个支持的 en / zh 选择，其他语言回退英文；
+  // 也可在设置菜单中固定为 zh-CN / en（localStorage['lanchat.language']）。
+  function systemLanguage() {
+    var preferred = navigator.languages || [navigator.language || 'en'];
+    var match = preferred.find(function (value) { return /^(zh|en)(-|$)/i.test(value); }) || 'en';
+    return /^zh/i.test(match) ? 'zh-CN' : 'en';
+  }
+  var languagePref = storageGet('lanchat.language');
+  if (languagePref !== 'zh-CN' && languagePref !== 'en') languagePref = 'system';
+  var language = languagePref === 'system' ? systemLanguage() : languagePref;
   var english = {
   "允许这台设备加入？": "Allow this device to join?",
   "同意后该设备可以查看聊天记录、收发消息和文件。": "Once approved, this device can view history and exchange messages and files.",
@@ -467,6 +532,8 @@ SOFTWARE.
   "会话中的最近文件可直接打开，无需在消息中翻找。": "Open recent files directly without searching through messages.",
   "这里显示当前同步记录中的文件，最多展示最近 12 个。": "Files from the current history are shown here, with up to 12 recent files.",
   "主题": "Theme",
+  "设置": "Settings",
+  "语言": "Language",
   "跟随系统": "System",
   "浅色": "Light",
   "深色": "Dark",
@@ -530,21 +597,27 @@ SOFTWARE.
     if (value.indexOf('上传失败：') === 0) return 'Upload failed: ' + value.slice(5);
     return value;
   }
-  function translatePage() {
-    document.documentElement.lang = language;
+  // 静态文案在首次运行时记录中文原文，切换语言时据此重新翻译（双向）。
+  var staticTexts = [], staticAttrs = [];
+  (function collectStaticTexts() {
     var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     var node;
     while ((node = walker.nextNode())) {
       if (node.parentElement.closest('script,style')) continue;
       var source = node.textContent.trim();
-      if (english[source]) node.textContent = node.textContent.replace(source, t(source));
+      if (english[source]) staticTexts.push({ node: node, original: node.textContent, source: source });
     }
     document.querySelectorAll('[title],[aria-label],[placeholder]').forEach(function (element) {
       ['title', 'aria-label', 'placeholder'].forEach(function (attribute) {
-        if (element.hasAttribute(attribute)) element.setAttribute(attribute, t(element.getAttribute(attribute)));
+        var value = element.getAttribute(attribute);
+        if (value && english[value]) staticAttrs.push({ element: element, attribute: attribute, source: value });
       });
     });
-    document.title = t('局域网互传');
+  })();
+  function translatePage() {
+    document.documentElement.lang = language;
+    staticTexts.forEach(function (item) { item.node.textContent = item.original.replace(item.source, t(item.source)); });
+    staticAttrs.forEach(function (item) { item.element.setAttribute(item.attribute, t(item.source)); });
   }
   translatePage();
 
@@ -560,11 +633,11 @@ SOFTWARE.
 
   var state = {
     ws: null, token: null, self: null, joined: false, rejected: false, closedByHost: false,
-    messages: [], ids: {}, uploads: [], retry: 0, retryTimer: null
+    messages: [], ids: {}, uploads: [], retry: 0, retryTimer: null,
+    hostName: null, peers: []
   };
-
-  function storageGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
-  function storageSet(key, v) { try { localStorage.setItem(key, v); } catch (e) { /* 隐私模式 */ } }
+  // 动态文案以函数保存，切换语言时重新求值（状态、遮罩、横幅）。
+  var dynamicText = { status: null, overlayTitle: null, overlayDetail: null, banner: null };
 
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -720,7 +793,19 @@ SOFTWARE.
     return true;
   }
 
+  function renderTitle() {
+    if (!state.hostName) {
+      document.title = t('局域网互传');
+      if (state.joined) els.title.textContent = $('sidebarTitle').textContent = t('局域网互传');
+      return;
+    }
+    els.title.textContent = state.hostName;
+    $('sidebarTitle').textContent = state.hostName;
+    document.title = state.hostName + t(" · 局域网互传");
+  }
+
   function renderPeers(peers) {
+    state.peers = peers;
     els.peerCount.textContent = peers.length;
     els.peerList.textContent = '';
     var labels = { host: t("主机"), app: 'App', web: t("网页") };
@@ -732,8 +817,14 @@ SOFTWARE.
   }
 
   function setStatus(text, kind) {
-    els.status.textContent = text;
+    dynamicText.status = text;
+    els.status.textContent = text();
     els.dot.className = 'dot' + (kind ? ' ' + kind : '');
+  }
+  function setBanner(text) {
+    dynamicText.banner = text;
+    els.banner.hidden = !text;
+    if (text) els.banner.textContent = text();
   }
 
   function setEnabled(on) {
@@ -743,8 +834,10 @@ SOFTWARE.
   function showOverlay(title, detail, opts) {
     opts = opts || {};
     els.overlay.hidden = false;
-    els.overlayTitle.textContent = title;
-    els.overlayDetail.textContent = detail || '';
+    dynamicText.overlayTitle = title;
+    dynamicText.overlayDetail = detail;
+    els.overlayTitle.textContent = title();
+    els.overlayDetail.textContent = detail ? detail() : '';
     els.overlaySpinner.hidden = !opts.spinner;
     els.overlayBtn.hidden = !opts.button;
   }
@@ -757,8 +850,10 @@ SOFTWARE.
     var ws;
     try { ws = new WebSocket(proto + location.host + '/ws'); } catch (e) { scheduleRetry(); return; }
     state.ws = ws;
-    setStatus(t("正在连接…"), 'warn');
-    if (!state.joined && !state.messages.length) showOverlay(t("正在连接主机…"), location.host, { spinner: true });
+    setStatus(function () { return t("正在连接…"); }, 'warn');
+    if (!state.joined && !state.messages.length) {
+      showOverlay(function () { return t("正在连接主机…"); }, function () { return location.host; }, { spinner: true });
+    }
 
     ws.onopen = function () {
       ws.send(JSON.stringify({ type: 'hello', data: { deviceId: deviceId, name: myName, platform: 'web' } }));
@@ -782,18 +877,18 @@ SOFTWARE.
   function scheduleRetry() {
     state.retry++;
     var delay = Math.min(15, Math.pow(2, Math.min(state.retry - 1, 4)));
-    var reason = state.closedByHost ? t("主机已结束会话") : t("连接已断开");
-    setStatus(reason + t('，') + delay + t(" 秒后重试"), 'bad');
-    els.banner.hidden = false;
-    els.banner.textContent = reason + t("，正在自动重连…");
+    var closedByHost = state.closedByHost;
+    function reason() { return closedByHost ? t("主机已结束会话") : t("连接已断开"); }
+    setStatus(function () { return reason() + t('，') + delay + t(" 秒后重试"); }, 'bad');
+    setBanner(function () { return reason() + t("，正在自动重连…"); });
     state.retryTimer = setTimeout(connect, delay * 1000);
   }
 
   function handle(type, data) {
     switch (type) {
       case 'pending':
-        setStatus(t("等待主机确认"), 'warn');
-        showOverlay(t("等待主机确认"), t("已向主机发送加入请求，请在主机 App 上点击“同意”"), { spinner: true });
+        setStatus(function () { return t("等待主机确认"); }, 'warn');
+        showOverlay(function () { return t("等待主机确认"); }, function () { return t("已向主机发送加入请求，请在主机 App 上点击“同意”"); }, { spinner: true });
         break;
       case 'welcome':
         state.token = data.token;
@@ -801,19 +896,19 @@ SOFTWARE.
         state.joined = true;
         state.retry = 0;
         state.closedByHost = false;
-        els.title.textContent = data.host && data.host.name ? data.host.name : t("局域网互传");
-        $('sidebarTitle').textContent = els.title.textContent;
-        document.title = els.title.textContent + t(" · 局域网互传");
-        setStatus(t("已连接"), 'ok');
-        els.banner.hidden = true;
+        state.hostName = data.host && data.host.name ? data.host.name : null;
+        renderTitle();
+        setStatus(function () { return t("已连接"); }, 'ok');
+        setBanner(null);
         hideOverlay();
         setEnabled(true);
         break;
       case 'rejected':
         state.rejected = true;
-        setStatus(t("已被拒绝"), 'bad');
+        setStatus(function () { return t("已被拒绝"); }, 'bad');
         setEnabled(false);
-        showOverlay(t("无法加入会话"), (data && diagnostic(data.reason)) || t("主机拒绝了你的加入请求"), { button: true });
+        var reason = data && data.reason;
+        showOverlay(function () { return t("无法加入会话"); }, function () { return diagnostic(reason) || t("主机拒绝了你的加入请求"); }, { button: true });
         break;
       case 'peers':
         renderPeers(Array.isArray(data) ? data : []);
@@ -963,6 +1058,63 @@ SOFTWARE.
     state.rejected = false; state.retry = 0;
     connect();
   });
+
+  // ------------------------------------------------------------------ 设置（主题、语言）
+  // 与 App SettingsMenu 一致：主题 system / light / dark，语言 system / zh-CN / en，保存在 localStorage。
+  var themePref = storageGet('lanchat.theme');
+  if (themePref !== 'light' && themePref !== 'dark') themePref = 'system';
+  function applyTheme(value) {
+    themePref = value;
+    if (value === 'system') delete document.documentElement.dataset.theme;
+    else document.documentElement.dataset.theme = value;
+    storageSet('lanchat.theme', value);
+  }
+  function applyLanguage(value) {
+    languagePref = value;
+    storageSet('lanchat.language', value);
+    var next = value === 'system' ? systemLanguage() : value;
+    if (next === language) return;
+    language = next;
+    translatePage();
+    // 动态区域按新语言重新渲染；用户消息、文件名、设备名保持原值。
+    if (dynamicText.status) els.status.textContent = dynamicText.status();
+    if (dynamicText.banner) els.banner.textContent = dynamicText.banner();
+    if (dynamicText.overlayTitle) els.overlayTitle.textContent = dynamicText.overlayTitle();
+    els.overlayDetail.textContent = dynamicText.overlayDetail ? dynamicText.overlayDetail() : '';
+    renderTitle();
+    renderPeers(state.peers);
+    renderAll();
+  }
+  var settingsBtn = $('settingsBtn'), settingsMenu = $('settingsMenu');
+  function syncSettingsMenu() {
+    settingsMenu.querySelectorAll('input[name=theme]').forEach(function (input) { input.checked = input.value === themePref; });
+    settingsMenu.querySelectorAll('input[name=language]').forEach(function (input) { input.checked = input.value === languagePref; });
+  }
+  function setSettingsOpen(open, restoreFocus) {
+    settingsMenu.hidden = !open;
+    settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      syncSettingsMenu();
+      var checked = settingsMenu.querySelector('input:checked');
+      if (checked) checked.focus();
+    } else if (restoreFocus) {
+      settingsBtn.focus();
+    }
+  }
+  settingsBtn.addEventListener('click', function () { setSettingsOpen(settingsMenu.hidden, true); });
+  settingsMenu.addEventListener('change', function (event) {
+    var input = event.target;
+    if (input.name === 'theme') applyTheme(input.value);
+    if (input.name === 'language') applyLanguage(input.value);
+  });
+  document.addEventListener('click', function (event) {
+    if (!settingsMenu.hidden && !event.target.closest('.settings')) setSettingsOpen(false, false);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && !settingsMenu.hidden) setSettingsOpen(false, true);
+  });
+  // 跟随系统时，系统语言变化后同步更新界面。
+  window.addEventListener('languagechange', function () { if (languagePref === 'system') applyLanguage('system'); });
 
   // 拖拽上传：dragenter/dragleave 计数，避免子元素触发闪烁。
   var dragDepth = 0;

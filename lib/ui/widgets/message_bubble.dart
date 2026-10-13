@@ -37,43 +37,48 @@ class MessageBubble extends StatelessWidget {
     final sender = message.sender;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-      child: Column(
-        crossAxisAlignment: isSelf
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
-        children: [
-          if (showSender)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
-              child: Text(
-                '${isSelf ? context.l10n.me : sender.name}'
-                '${sender.platform == PeerPlatform.host && !isSelf ? context.l10n.hostSuffix : ''}'
-                ' · ${formatTime(message.timestamp, locale: context.l10n.localeName)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.of(context).textSecondary,
+      // 父级 Column 默认居中且本 Column 宽度随内容收缩，需显式对齐到发送方一侧：
+      // 自己的消息靠右，其他人的消息靠左。
+      child: Align(
+        alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
+        child: Column(
+          crossAxisAlignment: isSelf
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
+          children: [
+            if (showSender)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 6),
+                child: Text(
+                  '${isSelf ? context.l10n.me : sender.name}'
+                  '${sender.platform == PeerPlatform.host && !isSelf ? context.l10n.hostSuffix : ''}'
+                  ' · ${formatTime(message.timestamp, locale: context.l10n.localeName)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.of(context).textSecondary,
+                  ),
                 ),
               ),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: maxWidth > 520 ? 520 : maxWidth,
+              ),
+              child: message.kind == MessageKind.file && message.file != null
+                  ? _FileBubble(
+                      file: message.file!,
+                      isSelf: isSelf,
+                      session: session,
+                      onOpen: onOpenFile,
+                      onShare: onShareFile,
+                    )
+                  : _TextBubble(
+                      text: message.text ?? '',
+                      isSelf: isSelf,
+                      onCopy: onCopyText,
+                    ),
             ),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: maxWidth > 520 ? 520 : maxWidth,
-            ),
-            child: message.kind == MessageKind.file && message.file != null
-                ? _FileBubble(
-                    file: message.file!,
-                    isSelf: isSelf,
-                    session: session,
-                    onOpen: onOpenFile,
-                    onShare: onShareFile,
-                  )
-                : _TextBubble(
-                    text: message.text ?? '',
-                    isSelf: isSelf,
-                    onCopy: onCopyText,
-                  ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -227,9 +232,8 @@ class _FileBubble extends StatelessWidget {
                                     (formatBytes(file.size)).toString(),
                                   )
                                 : context.l10n.downloadProgress(
-                                    ((progress * 100).toStringAsFixed(
-                                      0,
-                                    )).toString(),
+                                    ((progress * 100).toStringAsFixed(0))
+                                        .toString(),
                                   ),
                             style: TextStyle(color: sub, fontSize: 12),
                           ),
