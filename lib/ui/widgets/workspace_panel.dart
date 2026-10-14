@@ -5,10 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../l10n/ui_strings.dart';
 import '../theme.dart';
 
-/// 工作区背景：纯色底 + 顶部极淡 primary 光晕。
-///
-/// 基底与渐变终止色均为 background，与原生标题栏使用同一颜色，
-/// 保证 macOS 标题栏与内容区无缝衔接；首页与聊天页保持一致。
 class WorkspaceBackground extends StatelessWidget {
   const WorkspaceBackground({super.key, required this.child});
   final Widget child;
@@ -16,21 +12,22 @@ class WorkspaceBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.background,
-        gradient: RadialGradient(
-          center: Alignment.topCenter,
-          radius: 1.4,
-          colors: [colors.glow, colors.background],
+    return SizedBox.expand(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.background,
+          gradient: RadialGradient(
+            center: Alignment.topCenter,
+            radius: 1.4,
+            colors: [colors.glow, colors.background],
+          ),
         ),
+        child: child,
       ),
-      child: child,
     );
   }
 }
 
-/// 创建会话卡片内的连接方式示意，不表示实际在线设备。
 class ConnectionDiagram extends StatelessWidget {
   const ConnectionDiagram({super.key, required this.deviceName});
   final String deviceName;

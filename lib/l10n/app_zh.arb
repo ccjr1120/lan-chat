@@ -95,23 +95,17 @@
   "deviceNameHint": "其他设备看到的名称",
   "cancel": "取消",
   "save": "保存",
-  "nameNextSession": "新名称将在下次开启服务时生效",
   "backHome": "返回首页",
   "joinSession": "加入会话",
   "appName": "局域网互传",
   "renameDevice": "修改设备名称",
-  "findDevices": "找到设备，开始互传",
   "homeHeadline": "在设备之间，轻松传文件",
   "homeHeadlineCompact": "在设备之间，\n轻松传文件",
   "sessionReady": "你的会话已准备好",
   "findDevicesDetail": "连接同一个 Wi-Fi，选择附近的会话。",
   "homeDetail": "同一个 Wi-Fi，无需账号。文字和文件即刻互传。",
   "inviteDetail": "邀请其他设备加入，电脑浏览器也能使用。",
-  "joinNearbyDetail": "连接附近已开启的设备",
   "allDevicesHint": "手机、电脑，都能轻松连接",
-  "sessionStillRunning": "你的会话仍在运行",
-  "returnToSession": "返回首页可以进入或结束会话",
-  "myDeviceRename": "我的设备 · 点击修改名称",
   "createSession": "创建会话",
   "createSessionDetail": "让其他设备连接到这里，发送文字、图片和文件。",
   "creatingSession": "正在创建…",
@@ -123,7 +117,6 @@
       }
     }
   },
-  "joinAnotherSession": "加入其他会话",
   "nearbySessions": "附近的会话",
   "searchAgain": "重新搜索",
   "searchingDevices": "正在寻找附近的会话",
@@ -290,5 +283,6 @@
   "web": "网页",
   "app": "App",
   "unnamedDevice": "未命名设备",
-  "hostSuffix": "（主机）"
+  "hostSuffix": "（主机）",
+  "orDivider": "或"
 }

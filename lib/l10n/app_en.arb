@@ -95,23 +95,17 @@
   "deviceNameHint": "The name other devices see",
   "cancel": "Cancel",
   "save": "Save",
-  "nameNextSession": "The new name takes effect the next time you start a session",
   "backHome": "Back to home",
   "joinSession": "Join a session",
   "appName": "LAN Chat",
   "renameDevice": "Rename device",
-  "findDevices": "Find a device and start sharing",
   "homeHeadline": "Share files easily between devices",
   "homeHeadlineCompact": "Share files easily\nbetween devices",
   "sessionReady": "Your session is ready",
   "findDevicesDetail": "Connect to the same Wi-Fi and choose a nearby session.",
   "homeDetail": "Same Wi-Fi, no account needed. Share messages and files instantly.",
   "inviteDetail": "Invite other devices. A computer browser works too.",
-  "joinNearbyDetail": "Connect to a nearby device with an active session",
   "allDevicesHint": "Connect easily from phones and computers",
-  "sessionStillRunning": "Your session is still running",
-  "returnToSession": "Go back home to open or end your session",
-  "myDeviceRename": "My device · Click to rename",
   "createSession": "Create a session",
   "createSessionDetail": "Let other devices connect here to share messages, images and files.",
   "creatingSession": "Creating…",
@@ -123,7 +117,6 @@
       }
     }
   },
-  "joinAnotherSession": "Join another session",
   "nearbySessions": "Nearby sessions",
   "searchAgain": "Search again",
   "searchingDevices": "Looking for nearby sessions",
@@ -290,5 +283,6 @@
   "web": "Browser",
   "app": "App",
   "unnamedDevice": "Unnamed device",
-  "hostSuffix": " (host)"
+  "hostSuffix": " (host)",
+  "orDivider": "or"
 }

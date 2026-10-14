@@ -128,9 +128,9 @@ token 通过 `?token=` 或 `Authorization: Bearer` 传递。它只在对应 WS �
 
 App 在 `lib/app.dart` 配置浅色 / 深色 ThemeData。右上角共享设置菜单（SettingsMenu）提供主题（跟随系统 / 浅色 / 深色）与界面语言（跟随系统 / 简体中文 / English）两组选项，初始均跟随系统。选项通过 SettingsStore 的 `themeMode`、`locale` 持久化，旧设置文件缺失字段时回退为 system；MaterialApp（themeMode、locale）与 AppPreferences 监听设置更新。`lib/ui/theme.dart` 的 AppColors ThemeExtension 提供语义配色（含 primaryGradient / glow 派生强调 token），首页、聊天页及共享组件从当前 BuildContext 读取；网页 CSS 同步明暗变量（含 `--primary-2`、`--glow`），默认通过 prefers-color-scheme 跟随浏览器系统外观，头部设置菜单可固定浅色 / 深色（`<html data-theme>`）。
 
-首页宽度 ≥ 900 时采用最大宽度 1440 的操作双栏：左侧为创建 / 运行中的会话面板，右侧为设备身份和加入入口，比例 7:4、间距 24；其他宽度使用最大宽度 620 的单列。独立宣传 banner 与桌面统计卡移除，连接方式示意嵌入创建会话卡片。会话页仍在 900 / 1280 宽度分别显示在线设备栏与最近文件栏，辅助信息来自现有 HostSession / ChatSession。
+首页分为首页 / 会话已开启 / 加入会话三个互斥视图，首页只有一张会话卡（创建在上、「或」分隔、「加入会话」按钮在下），加入视图显示附近会话实时列表。所有宽度均使用最大宽度 620 的居中单列。独立宣传 banner 与桌面统计卡移除，连接方式示意嵌入会话卡创建区。会话页仍在 900 / 1280 宽度分别显示在线设备栏与最近文件栏，辅助信息来自现有 HostSession / ChatSession。
 
-首页与聊天页共享 WorkspaceBackground：background 纯色为底，顶部叠加极淡 primary 光晕（glow token 的径向渐变，终止色为 background），基底与 macOS 标题栏背景保持一致，衔接无缝。macOS 首页在所有窗口宽度均使用原生产品标题，不显示重复 AppBar；页面右上保留设置菜单，加入模式在正文提供返回入口。MainFlutterWindow 通过 `lanchat/window` MethodChannel 的 `setStyle` 接收本地化产品名与 themeMode，原生标题栏透明并与 Flutter 背景一致；system 时继承系统 appearance，light / dark 时设置对应 NSAppearance。effectiveAppearance 观察负责系统外观变化和背景更新。原生窗口按钮与标题区域保留。
+首页与聊天页共享 WorkspaceBackground：background 纯色为底，顶部叠加极淡 primary 光晕（glow token 的径向渐变，终止色为 background），基底与 macOS 标题栏背景保持一致，衔接无缝。macOS 首页在所有窗口宽度均使用原生产品标题，不显示重复 AppBar；页面右上保留设置菜单，会话 / 加入子视图在正文标题行提供返回入口。MainFlutterWindow 通过 `lanchat/window` MethodChannel 的 `setStyle` 接收本地化产品名与 themeMode，原生标题栏透明并与 Flutter 背景一致；system 时继承系统 appearance，light / dark 时设置对应 NSAppearance。effectiveAppearance 观察负责系统外观变化和背景更新。原生窗口按钮与标题区域保留。
 
 App 微动效统一为 200ms easeOutCubic，集中在 `lib/ui/widgets/motion.dart`（AppMotion 常量、FadeSlideIn 入场、HoverLift 桌面悬停微提升、GradientFilledButton 渐变主按钮），不新增依赖；主题切换为 250ms 淡入淡出（MaterialApp themeAnimationDuration/Curve）。AppColors 的派生强调 token：primaryGradient（light `#3458E8→#4A76FF`，dark `#8BA4FF→#6C8CFF`）用于主操作按钮与自己发送的气泡，glow（primary 6–8% 透明度）用于工作区顶部光晕；网页端以 `--primary-2`、`--glow` CSS 变量与之一致。
 

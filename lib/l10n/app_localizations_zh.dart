@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -153,9 +152,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get save => '保存';
 
   @override
-  String get nameNextSession => '新名称将在下次开启服务时生效';
-
-  @override
   String get backHome => '返回首页';
 
   @override
@@ -166,9 +162,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get renameDevice => '修改设备名称';
-
-  @override
-  String get findDevices => '找到设备，开始互传';
 
   @override
   String get homeHeadline => '在设备之间，轻松传文件';
@@ -189,19 +182,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inviteDetail => '邀请其他设备加入，电脑浏览器也能使用。';
 
   @override
-  String get joinNearbyDetail => '连接附近已开启的设备';
-
-  @override
   String get allDevicesHint => '手机、电脑，都能轻松连接';
-
-  @override
-  String get sessionStillRunning => '你的会话仍在运行';
-
-  @override
-  String get returnToSession => '返回首页可以进入或结束会话';
-
-  @override
-  String get myDeviceRename => '我的设备 · 点击修改名称';
 
   @override
   String get createSession => '创建会话';
@@ -216,9 +197,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String enterSession(int value0) {
     return '进入会话 · $value0 台设备在线';
   }
-
-  @override
-  String get joinAnotherSession => '加入其他会话';
 
   @override
   String get nearbySessions => '附近的会话';
@@ -483,4 +461,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get hostSuffix => '（主机）';
+
+  @override
+  String get orDivider => '或';
 }

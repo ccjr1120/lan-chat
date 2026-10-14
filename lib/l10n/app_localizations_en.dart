@@ -1,6 +1,5 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -159,10 +158,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get save => 'Save';
 
   @override
-  String get nameNextSession =>
-      'The new name takes effect the next time you start a session';
-
-  @override
   String get backHome => 'Back to home';
 
   @override
@@ -173,9 +168,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get renameDevice => 'Rename device';
-
-  @override
-  String get findDevices => 'Find a device and start sharing';
 
   @override
   String get homeHeadline => 'Share files easily between devices';
@@ -199,20 +191,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Invite other devices. A computer browser works too.';
 
   @override
-  String get joinNearbyDetail =>
-      'Connect to a nearby device with an active session';
-
-  @override
   String get allDevicesHint => 'Connect easily from phones and computers';
-
-  @override
-  String get sessionStillRunning => 'Your session is still running';
-
-  @override
-  String get returnToSession => 'Go back home to open or end your session';
-
-  @override
-  String get myDeviceRename => 'My device · Click to rename';
 
   @override
   String get createSession => 'Create a session';
@@ -234,9 +213,6 @@ class AppLocalizationsEn extends AppLocalizations {
     );
     return 'Open session · $_temp0';
   }
-
-  @override
-  String get joinAnotherSession => 'Join another session';
 
   @override
   String get nearbySessions => 'Nearby sessions';
@@ -529,4 +505,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get hostSuffix => ' (host)';
+
+  @override
+  String get orDivider => 'or';
 }

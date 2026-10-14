@@ -356,12 +356,6 @@ abstract class AppLocalizations {
   /// **'Save'**
   String get save;
 
-  /// No description provided for @nameNextSession.
-  ///
-  /// In en, this message translates to:
-  /// **'The new name takes effect the next time you start a session'**
-  String get nameNextSession;
-
   /// No description provided for @backHome.
   ///
   /// In en, this message translates to:
@@ -385,12 +379,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rename device'**
   String get renameDevice;
-
-  /// No description provided for @findDevices.
-  ///
-  /// In en, this message translates to:
-  /// **'Find a device and start sharing'**
-  String get findDevices;
 
   /// No description provided for @homeHeadline.
   ///
@@ -428,35 +416,11 @@ abstract class AppLocalizations {
   /// **'Invite other devices. A computer browser works too.'**
   String get inviteDetail;
 
-  /// No description provided for @joinNearbyDetail.
-  ///
-  /// In en, this message translates to:
-  /// **'Connect to a nearby device with an active session'**
-  String get joinNearbyDetail;
-
   /// No description provided for @allDevicesHint.
   ///
   /// In en, this message translates to:
   /// **'Connect easily from phones and computers'**
   String get allDevicesHint;
-
-  /// No description provided for @sessionStillRunning.
-  ///
-  /// In en, this message translates to:
-  /// **'Your session is still running'**
-  String get sessionStillRunning;
-
-  /// No description provided for @returnToSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Go back home to open or end your session'**
-  String get returnToSession;
-
-  /// No description provided for @myDeviceRename.
-  ///
-  /// In en, this message translates to:
-  /// **'My device · Click to rename'**
-  String get myDeviceRename;
 
   /// No description provided for @createSession.
   ///
@@ -481,12 +445,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open session · {value0, plural, one{1 device online} other{{value0} devices online}}'**
   String enterSession(int value0);
-
-  /// No description provided for @joinAnotherSession.
-  ///
-  /// In en, this message translates to:
-  /// **'Join another session'**
-  String get joinAnotherSession;
 
   /// No description provided for @nearbySessions.
   ///
@@ -967,6 +925,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **' (host)'**
   String get hostSuffix;
+
+  /// No description provided for @orDivider.
+  ///
+  /// In en, this message translates to:
+  /// **'or'**
+  String get orDivider;
 }
 
 class _AppLocalizationsDelegate
