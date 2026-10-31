@@ -42,6 +42,7 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scroll = ScrollController();
   final FocusNode _inputFocus = FocusNode();
   int _lastCount = 0;
+  late bool _inviteExpanded = session.isHost;
 
   /// 已进入过列表的消息 id，滚动重建时不重放入场动画。
   final Set<String> _seenMessageIds = {};
@@ -184,22 +185,6 @@ class _ChatPageState extends State<ChatPage> {
     _toast(strings.copied);
   }
 
-  void _showSessionInfo() {
-    unawaited(
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (context) => SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: _SessionInfo(session: session),
-          ),
-        ),
-      ),
-    );
-  }
-
   Future<void> _confirmClearHistory(HostSession host) async {
     final ok = await showDialog<bool>(
       context: context,
@@ -224,6 +209,32 @@ class _ChatPageState extends State<ChatPage> {
     if (ok == true) await host.clearHistory();
   }
 
+  /// 仅当有其他设备在线时才确认；没有人在线可直接结束。
+  Future<bool> _confirmEndSession(HostSession host) async {
+    if (host.peers.length <= 1) return true;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(context.l10n.endSessionTitle),
+        content: Text(context.l10n.endSessionDetail),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(context.l10n.continueSession),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.of(context).danger,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(context.l10n.endSession),
+          ),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
   void _toast(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
@@ -244,97 +255,96 @@ class _ChatPageState extends State<ChatPage> {
       listenable: session,
       builder: (context, _) {
         final s = session;
-        return Scaffold(
-          appBar: AppBar(
-            title: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  s.isHost ? context.l10n.mySession : s.title,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  _subtitle(s),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.of(context).textSecondary,
+        final host = s is HostSession ? s : null;
+        return PopScope(
+          // 主机离开聊天页即结束会话；有其他设备在线时先确认。
+          canPop: host == null || host.peers.length <= 1,
+          onPopInvokedWithResult: (didPop, _) async {
+            if (didPop || host == null) return;
+            final ok = await _confirmEndSession(host);
+            if (ok && mounted) Navigator.of(this.context).pop();
+          },
+          child: Scaffold(
+            appBar: AppBar(
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    s.isHost ? context.l10n.mySession : s.title,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  Text(
+                    _subtitle(s),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.of(context).textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                const SettingsMenu(),
+                _PeersMenu(session: s),
+                if (host != null)
+                  PopupMenuButton<String>(
+                    onSelected: (v) async {
+                      if (v == 'clear') {
+                        await _confirmClearHistory(host);
+                      } else if (v == 'end') {
+                        final ok = await _confirmEndSession(host);
+                        if (ok && mounted) Navigator.of(this.context).pop();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'clear',
+                        child: Text(context.l10n.clearHistory),
+                      ),
+                      PopupMenuItem(
+                        value: 'end',
+                        child: Text(context.l10n.endSession),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+            body: Column(
+              children: [
+                _StatusBanner(session: s),
+                if (host != null)
+                  _InviteBar(
+                    session: host,
+                    expanded: _inviteExpanded,
+                    onToggle: () =>
+                        setState(() => _inviteExpanded = !_inviteExpanded),
+                  ),
+                Expanded(
+                  child: WorkspaceBackground(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 880),
+                        child: AnimatedSwitcher(
+                          duration: AppMotion.durationOf(context),
+                          switchInCurve: AppMotion.curve,
+                          switchOutCurve: AppMotion.curve,
+                          child: KeyedSubtree(
+                            key: ValueKey(_bodyStateKey(s)),
+                            child: _buildBody(s),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                _Composer(
+                  controller: _input,
+                  focusNode: _inputFocus,
+                  enabled: _canSend,
+                  onSend: _sendText,
+                  onAttach: _pickAndSendFiles,
                 ),
               ],
             ),
-            actions: [
-              const SettingsMenu(),
-              IconButton(
-                tooltip: s.isHost
-                    ? context.l10n.sessionSettings
-                    : context.l10n.sessionInfo,
-                icon: Badge(
-                  isLabelVisible:
-                      s is HostSession && s.pendingRequests.isNotEmpty,
-                  child: Icon(s.isHost ? LucideIcons.qrCode : LucideIcons.info),
-                ),
-                onPressed: _showSessionInfo,
-              ),
-              if (s is HostSession)
-                PopupMenuButton<String>(
-                  onSelected: (v) {
-                    if (v == 'clear') unawaited(_confirmClearHistory(s));
-                  },
-                  itemBuilder: (_) => [
-                    PopupMenuItem(
-                      value: 'clear',
-                      child: Text(context.l10n.clearHistory),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              final wide = constraints.maxWidth >= 900;
-              return Row(
-                children: [
-                  if (wide)
-                    _DeviceSidebar(session: s, onInvite: _showSessionInfo),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        _StatusBanner(session: s),
-                        Expanded(
-                          child: WorkspaceBackground(
-                            child: Center(
-                              child: ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 880,
-                                ),
-                                child: AnimatedSwitcher(
-                                  duration: AppMotion.durationOf(context),
-                                  switchInCurve: AppMotion.curve,
-                                  switchOutCurve: AppMotion.curve,
-                                  child: KeyedSubtree(
-                                    key: ValueKey(_bodyStateKey(s)),
-                                    child: _buildBody(s),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        _Composer(
-                          controller: _input,
-                          focusNode: _inputFocus,
-                          enabled: _canSend,
-                          onSend: _sendText,
-                          onAttach: _pickAndSendFiles,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (constraints.maxWidth >= 1280)
-                    _RecentFiles(session: s, onOpen: _openFile),
-                ],
-              );
-            },
           ),
         );
       },
@@ -393,15 +403,6 @@ class _ChatPageState extends State<ChatPage> {
     final messages = s.messages;
     final outgoing = s.outgoing;
     if (messages.isEmpty && outgoing.isEmpty) {
-      if (s.status == SessionStatus.connected &&
-          MediaQuery.sizeOf(context).width >= 900) {
-        return _DesktopStart(
-          session: s,
-          onSendFile: _pickAndSendFiles,
-          onInvite: _showSessionInfo,
-          onWrite: () => _inputFocus.requestFocus(),
-        );
-      }
       return _CenteredState(
         icon: LucideIcons.messagesSquare,
         title: s.status == SessionStatus.connected
@@ -410,13 +411,6 @@ class _ChatPageState extends State<ChatPage> {
         detail: s.isHost
             ? context.l10n.inviteFirstFile
             : context.l10n.sharingHint,
-        action: s.isHost
-            ? OutlinedButton.icon(
-                onPressed: _showSessionInfo,
-                icon: const Icon(LucideIcons.qrCode, size: 18),
-                label: Text(context.l10n.inviteDevice),
-              )
-            : null,
       );
     }
     return ListView.builder(
@@ -662,29 +656,11 @@ class _Composer extends StatelessWidget {
                           builder: (context, value, _) => IconButton.filled(
                             tooltip: context.l10n.send,
                             icon: const Icon(LucideIcons.arrowUp, size: 22),
-                            style:
-                                IconButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ).copyWith(
-                                  // 可发送时与主操作按钮一致使用 primaryGradient；
-                                  // Ink 绘制在按钮 Material 上，水波纹仍可见。
-                                  backgroundBuilder: (context, states, child) =>
-                                      states.contains(WidgetState.disabled)
-                                      ? child!
-                                      : Ink(
-                                          decoration: BoxDecoration(
-                                            gradient: AppColors.of(
-                                              context,
-                                            ).primaryGradient,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: child,
-                                        ),
-                                ),
+                            style: IconButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                             onPressed: enabled && value.text.trim().isNotEmpty
                                 ? onSend
                                 : null,
@@ -755,399 +731,174 @@ class _CenteredState extends StatelessWidget {
   }
 }
 
-/// 底部弹层：主机显示访问地址/访问控制，两端都显示在线设备。
-class _SessionInfo extends StatelessWidget {
-  const _SessionInfo({required this.session});
-
+/// 顶栏在线设备入口：轻量下拉列表，替代常驻侧栏与底部弹层。
+class _PeersMenu extends StatelessWidget {
+  const _PeersMenu({required this.session});
   final ChatSession session;
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: session,
-      builder: (context, _) {
-        final s = session;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            if (s is HostSession) ...[
-              HostAddressCard(session: s),
-              const Divider(height: 32),
-            ],
-            if (s is ClientSession) ...[
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(LucideIcons.router),
-                title: Text(s.title),
-                subtitle: Text(
-                  context.l10n.hostAddress((s.address).toString()),
-                ),
-              ),
-              const Divider(height: 24),
-            ],
-            Text(
-              context.l10n.onlineDevicesCount(s.peers.length),
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
-            const SizedBox(height: 4),
-            for (final peer in s.peers)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                dense: true,
-                leading: Icon(switch (peer.platform) {
-                  PeerPlatform.host => LucideIcons.radio,
-                  PeerPlatform.app => LucideIcons.smartphone,
-                  PeerPlatform.web => LucideIcons.globe,
-                }),
-                title: Text(
-                  peer.id == s.self.id
-                      ? context.l10n.peerIsMe((peer.name).toString())
-                      : peer.name,
-                ),
-                subtitle: Text(context.l10n.platformLabel(peer.platform)),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// 宽屏常驻设备栏，窄屏继续通过会话详情访问。
-class _DeviceSidebar extends StatelessWidget {
-  const _DeviceSidebar({required this.session, required this.onInvite});
-  final ChatSession session;
-  final VoidCallback onInvite;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: 256,
-    decoration: BoxDecoration(
-      color: AppColors.of(context).surface,
-      border: Border(right: BorderSide(color: AppColors.of(context).divider)),
-    ),
-    child: ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Icon(
-          LucideIcons.monitorSmartphone,
-          size: 30,
-          color: AppColors.of(context).primary,
-        ),
-        const SizedBox(height: 20),
-        Text(
-          context.l10n.currentSession,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
-        const SizedBox(height: 6),
-        Text(session.title, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 16),
-        OutlinedButton.icon(
-          onPressed: onInvite,
-          icon: Icon(
-            session.isHost ? LucideIcons.qrCode : LucideIcons.info,
-            size: 18,
-          ),
-          label: Text(
-            session.isHost
-                ? context.l10n.inviteDevice
-                : context.l10n.sessionDetails,
-          ),
-        ),
-        const SizedBox(height: 28),
-        Text(
-          context.l10n.onlineDevices(session.peers.length),
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 12),
+    final secondary = AppColors.of(context).textSecondary;
+    return PopupMenuButton<void>(
+      tooltip: context.l10n.onlineDevicesCount(session.peers.length),
+      itemBuilder: (_) => [
         for (final peer in session.peers)
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              peer.platform == PeerPlatform.web
-                  ? LucideIcons.globe
-                  : peer.platform == PeerPlatform.host
-                  ? LucideIcons.radio
-                  : LucideIcons.smartphone,
-              size: 20,
-              color: AppColors.of(context).textSecondary,
-            ),
-            title: Text(
-              peer.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              peer.id == session.self.id
-                  ? context.l10n.myDevice
-                  : context.l10n.platformLabel(peer.platform),
-              style: const TextStyle(fontSize: 12),
-            ),
-          ),
-        const SizedBox(height: 24),
-        Text(
-          context.l10n.networkSharingHint,
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.6,
-            color: AppColors.of(context).textSecondary,
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _DesktopStart extends StatelessWidget {
-  const _DesktopStart({
-    required this.session,
-    required this.onSendFile,
-    required this.onInvite,
-    required this.onWrite,
-  });
-  final ChatSession session;
-  final VoidCallback onSendFile;
-  final VoidCallback onInvite;
-  final VoidCallback onWrite;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.all(32),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 620),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+          PopupMenuItem<void>(
+            child: Row(
               children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Icon(
-                    LucideIcons.monitorSmartphone,
-                    size: 40,
-                    color: AppColors.of(context).primary,
+                Icon(
+                  switch (peer.platform) {
+                    PeerPlatform.host => LucideIcons.radio,
+                    PeerPlatform.app => LucideIcons.smartphone,
+                    PeerPlatform.web => LucideIcons.globe,
+                  },
+                  size: 18,
+                  color: secondary,
+                ),
+                const SizedBox(width: 12),
+                Flexible(
+                  child: Text(
+                    peer.id == session.self.id
+                        ? context.l10n.peerIsMe(peer.name)
+                        : peer.name,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(width: 12),
                 Text(
-                  context.l10n.devicesConnected,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  session.peers.length > 1
-                      ? context.l10n.readyToShare(session.peers.length)
-                      : context.l10n.sessionEmptyHint,
-                  style: TextStyle(color: AppColors.of(context).textSecondary),
-                ),
-                const SizedBox(height: 28),
-                GradientFilledButton.icon(
-                  onPressed: onSendFile,
-                  icon: const Icon(LucideIcons.fileUp, size: 20),
-                  label: Text(context.l10n.chooseFileToSend),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: session.isHost ? onInvite : onWrite,
-                  icon: Icon(
-                    session.isHost
-                        ? LucideIcons.qrCode
-                        : LucideIcons.messageSquare,
-                    size: 18,
-                  ),
-                  label: Text(
-                    session.isHost
-                        ? context.l10n.inviteOtherDevices
-                        : context.l10n.writeMessage,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                const Divider(),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 20,
-                  runSpacing: 12,
-                  children: [
-                    _ContentHint(
-                      icon: LucideIcons.fileText,
-                      label: context.l10n.documentsFiles,
-                    ),
-                    _ContentHint(
-                      icon: LucideIcons.image,
-                      label: context.l10n.imagesVideos,
-                    ),
-                    _ContentHint(
-                      icon: LucideIcons.messageSquare,
-                      label: context.l10n.textLinks,
-                    ),
-                  ],
+                  context.l10n.platformLabel(peer.platform),
+                  style: TextStyle(fontSize: 12, color: secondary),
                 ),
               ],
             ),
           ),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(LucideIcons.users, size: 20, color: secondary),
+            const SizedBox(width: 4),
+            Text('${session.peers.length}', style: TextStyle(color: secondary)),
+          ],
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
-class _ContentHint extends StatelessWidget {
-  const _ContentHint({required this.icon, required this.label});
-  final IconData icon;
-  final String label;
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, size: 16, color: AppColors.of(context).textSecondary),
-      const SizedBox(width: 6),
-      Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: AppColors.of(context).textSecondary,
-        ),
-      ),
-    ],
-  );
-}
+/// 主机端顶部邀请条：收起时一行地址 + 复制，展开显示二维码与加入设置。
+class _InviteBar extends StatelessWidget {
+  const _InviteBar({
+    required this.session,
+    required this.expanded,
+    required this.onToggle,
+  });
 
-/// 从真实会话消息提取文件，提供桌面常驻快速打开入口。
-class _RecentFiles extends StatelessWidget {
-  const _RecentFiles({required this.session, required this.onOpen});
-  final ChatSession session;
-  final void Function(FileMeta) onOpen;
+  final HostSession session;
+  final bool expanded;
+  final VoidCallback onToggle;
 
   @override
   Widget build(BuildContext context) {
-    final files = session.messages
-        .where((m) => m.kind == MessageKind.file && m.file != null)
-        .toList()
-        .reversed
-        .toList();
-    final totalBytes = files.fold<int>(
-      0,
-      (sum, message) => sum + message.file!.size,
-    );
-    return Container(
-      width: 288,
-      decoration: BoxDecoration(
-        color: AppColors.of(context).surface,
-        border: Border(left: BorderSide(color: AppColors.of(context).divider)),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            context.l10n.sessionFiles,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            context.l10n.fileCountSize(
-              files.length,
-              (formatBytes(totalBytes)).toString(),
+    final colors = AppColors.of(context);
+    return ListenableBuilder(
+      listenable: session,
+      builder: (context, _) {
+        final url = session.primaryUrl;
+        return Material(
+          color: colors.surface,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: colors.divider)),
             ),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 24),
-          if (files.isEmpty)
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.of(context).background,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(
-                    LucideIcons.folderOpen,
-                    size: 28,
-                    color: AppColors.of(context).primary,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    context.l10n.filesAppearHere,
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 6),
-                  Text(
-                    context.l10n.recentFilesHint,
-                    style: TextStyle(
-                      fontSize: 12,
-                      height: 1.7,
-                      color: AppColors.of(context).textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          for (final message in files.take(12))
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: HoverLift(
-                borderRadius: BorderRadius.circular(12),
-                child: Material(
-                  color: AppColors.of(context).background,
-                  borderRadius: BorderRadius.circular(12),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    leading: Icon(
-                      message.file!.isImage
-                          ? LucideIcons.image
-                          : LucideIcons.fileText,
-                      size: 22,
-                      color: AppColors.of(context).primary,
-                    ),
-                    title: Text(
-                      message.file!.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 880),
+                child: AnimatedSize(
+                  duration: AppMotion.durationOf(context),
+                  curve: AppMotion.curve,
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      InkWell(
+                        onTap: onToggle,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 16, right: 4),
+                          child: Row(
+                            children: [
+                              Icon(
+                                LucideIcons.qrCode,
+                                size: 18,
+                                color: colors.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  url ?? context.l10n.noNetworkAddress,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (url != null)
+                                IconButton(
+                                  tooltip: context.l10n.copyAddress,
+                                  icon: const Icon(LucideIcons.copy, size: 18),
+                                  onPressed: () async {
+                                    await Clipboard.setData(
+                                      ClipboardData(text: url),
+                                    );
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context)
+                                        ..hideCurrentSnackBar()
+                                        ..showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              context.l10n.addressCopied,
+                                            ),
+                                          ),
+                                        );
+                                    }
+                                  },
+                                ),
+                              IconButton(
+                                tooltip: context.l10n.inviteDevice,
+                                icon: Icon(
+                                  expanded
+                                      ? LucideIcons.chevronUp
+                                      : LucideIcons.chevronDown,
+                                  size: 20,
+                                ),
+                                onPressed: onToggle,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    subtitle: Text(
-                      session.downloads[message.file!.id] == null
-                          ? '${formatBytes(message.file!.size)} · ${message.sender.name}'
-                          : context.l10n.downloadProgress(
-                              ((session.downloads[message.file!.id]! * 100)
-                                      .round())
-                                  .toString(),
-                            ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.of(context).textSecondary,
-                      ),
-                    ),
-                    onTap: session.downloads[message.file!.id] == null
-                        ? () => onOpen(message.file!)
-                        : null,
+                      if (expanded)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.sizeOf(context).height * 0.55,
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+                            child: HostAddressCard(session: session),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
             ),
-          const SizedBox(height: 24),
-          Text(
-            context.l10n.recentFilesLimit,
-            style: TextStyle(
-              fontSize: 12,
-              height: 1.7,
-              color: AppColors.of(context).textSecondary,
-            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

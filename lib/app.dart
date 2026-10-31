@@ -30,6 +30,9 @@ class LanChatApp extends StatelessWidget {
         onLocaleChanged: (value) => unawaited(
           storage.settings.setLocale(value?.languageCode ?? 'system'),
         ),
+        deviceName: storage.settings.deviceName,
+        onDeviceNameChanged: (value) =>
+            unawaited(storage.settings.setDeviceName(value)),
         child: MaterialApp(
           locale: locale,
           onGenerateTitle: (context) => context.l10n.appName,

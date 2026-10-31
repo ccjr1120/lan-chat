@@ -102,21 +102,14 @@ BoxDecoration _bubbleDecoration(
   final colors = AppColors.of(context);
   final accent = isSelf && filled;
   return BoxDecoration(
-    // 自己发送的文字气泡使用主色渐变强调；其余气泡保持 surface。
-    gradient: accent ? colors.primaryGradient : null,
-    color: accent ? null : colors.otherBubble,
+    // 自己发送的文字气泡使用浅色强调底；其余气泡保持 surface。
+    color: accent ? colors.selfBubble : colors.otherBubble,
     borderRadius: _bubbleRadius(isSelf),
     border: Border.all(
       color: accent ? colors.primary.withValues(alpha: 0.18) : colors.divider,
     ),
   );
 }
-
-/// 渐变自气泡上的前景色，与 ColorScheme.onPrimary 取值一致。
-Color _onSelfBubble(BuildContext context) =>
-    Theme.of(context).brightness == Brightness.dark
-    ? AppColors.of(context).background
-    : Colors.white;
 
 class _TextBubble extends StatelessWidget {
   const _TextBubble({
@@ -131,27 +124,20 @@ class _TextBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = isSelf
-        ? _onSelfBubble(context)
-        : AppColors.of(context).textPrimary;
     final selectable = SelectableText(
       text,
-      style: TextStyle(fontSize: 15, height: 1.6, color: fg),
+      style: TextStyle(
+        fontSize: 15,
+        height: 1.6,
+        color: AppColors.of(context).textPrimary,
+      ),
     );
     return GestureDetector(
       onLongPress: () => onCopy(text),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: _bubbleDecoration(context, isSelf),
-        child: isSelf
-            ? TextSelectionTheme(
-                // 默认选区色接近主色，在渐变底上不可辨认，改用前景色半透明。
-                data: TextSelectionThemeData(
-                  selectionColor: fg.withValues(alpha: 0.32),
-                ),
-                child: selectable,
-              )
-            : selectable,
+        child: selectable,
       ),
     );
   }
@@ -232,8 +218,9 @@ class _FileBubble extends StatelessWidget {
                                     (formatBytes(file.size)).toString(),
                                   )
                                 : context.l10n.downloadProgress(
-                                    ((progress * 100).toStringAsFixed(0))
-                                        .toString(),
+                                    ((progress * 100).toStringAsFixed(
+                                      0,
+                                    )).toString(),
                                   ),
                             style: TextStyle(color: sub, fontSize: 12),
                           ),

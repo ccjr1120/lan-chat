@@ -102,7 +102,63 @@ class SettingsMenu extends StatelessWidget {
             selected: locale?.languageCode == currentLanguage,
             onSelected: () => preferences.onLocaleChanged(locale),
           ),
+        const PopupMenuDivider(),
+        header(LucideIcons.monitorSmartphone, l10n.deviceName),
+        PopupMenuItem<VoidCallback>(
+          enabled: false,
+          height: 64,
+          child: _DeviceNameField(
+            initial: preferences.deviceName,
+            hint: l10n.deviceNameHint,
+            onSubmitted: (name) {
+              preferences.onDeviceNameChanged(name);
+              Navigator.pop(context);
+            },
+          ),
+        ),
       ],
     );
   }
+}
+
+/// 设置菜单内联改名：回车保存，空名称不保存。
+class _DeviceNameField extends StatefulWidget {
+  const _DeviceNameField({
+    required this.initial,
+    required this.hint,
+    required this.onSubmitted,
+  });
+
+  final String initial;
+  final String hint;
+  final ValueChanged<String> onSubmitted;
+
+  @override
+  State<_DeviceNameField> createState() => _DeviceNameFieldState();
+}
+
+class _DeviceNameFieldState extends State<_DeviceNameField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initial,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: _controller,
+    maxLength: 32,
+    maxLines: 1,
+    textInputAction: TextInputAction.done,
+    onSubmitted: widget.onSubmitted,
+    decoration: InputDecoration(
+      hintText: widget.hint,
+      counterText: '',
+      isDense: true,
+    ),
+  );
 }

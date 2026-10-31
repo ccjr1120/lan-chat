@@ -314,7 +314,13 @@ class LanServer extends ChangeNotifier {
     final fileId = _uuid.v4();
     File? part;
     try {
-      final parts = request.read().transform(MimeMultipartTransformer(boundary));
+      // request.read() 在某些平台下运行时类型是 Stream<Uint8List>，
+      // 直接 transform 会因泛型协变触发 `MimeMultipartTransformer` 类型不匹配；
+      // 显式 cast<List<int>>() 统一运行时类型后再接入。
+      final parts = request
+          .read()
+          .cast<List<int>>()
+          .transform(MimeMultipartTransformer(boundary));
       await for (final p in parts) {
         final disposition = parseContentDisposition(p.headers['content-disposition']);
         if (part != null || disposition.filename == null) {

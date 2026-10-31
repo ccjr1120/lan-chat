@@ -11,54 +11,52 @@
 <style>
   /* AppColors in lib/ui/theme.dart; all assets are bundled for offline use. */
   :root {
-    --primary:#3458E8; --primary-2:#4A76FF; --glow:rgba(52,88,232,.06);
-    --bg:#F7F8FA; --surface:#FFFFFF; --text:#182230;
-    --text2:#667085; --divider:#E4E7EC; --success:#16865C; --warning:#9A6700; --danger:#D92D20;
-    --self:#EEF2FF; --self-border:#E0E7FF; --on-primary:#FFFFFF; --primary-hover:#2946C0;
-    --warning-bg:#FFF7E6; --drop-bg:rgba(238,242,255,.96); --toast-text:#FFFFFF; --sidebar:256px;
+    --primary:#4F6FF0; --primary-hover:#3F5EDC;
+    --bg:#F7F8FA; --surface:#FFFFFF; --text:#2B3544;
+    --text2:#707A8C; --divider:#EEF0F3; --success:#16865C; --warning:#9A6700; --danger:#D92D20;
+    --self:#EEF2FF; --self-border:#E0E7FF; --on-primary:#FFFFFF;
+    --warning-bg:#FFF7E6; --drop-bg:rgba(238,242,255,.96); --toast-text:#FFFFFF;
     /* 主栏统一水平边距：头部、横幅、消息列表与输入栏共用，内容列最大 880 居中，左右边缘逐一对齐。 */
-    --content:880px; --gutter:max(28px,calc((100% - var(--content))/2)); --header-h:76px;
-    --self-selection:rgba(255,255,255,.32); --ease:cubic-bezier(.33,1,.68,1); /* easeOutCubic，对应 AppMotion */
-    --card-hover-shadow:rgba(24,34,48,.18); --menu-shadow:0 12px 32px -12px rgba(24,34,48,.24);
+    --content:880px; --gutter:max(28px,calc((100% - var(--content))/2)); --header-h:72px;
+    --ease:cubic-bezier(.33,1,.68,1); /* easeOutCubic，对应 AppMotion */
+    --card-hover-shadow:rgba(24,34,48,.10); --menu-shadow:0 8px 24px -12px rgba(24,34,48,.14);
     color-scheme:light dark;
   }
   /* 主题：默认跟随系统；设置菜单选择浅色 / 深色时在 <html> 写入 data-theme 覆盖。 */
   :root[data-theme=light] { color-scheme:light; }
   @media (prefers-color-scheme:dark) {
     :root:not([data-theme=light]) {
-      --primary:#8BA4FF; --primary-2:#6C8CFF; --glow:rgba(139,164,255,.08);
-      --bg:#11151C; --surface:#1B222D; --text:#EDF1F7;
-      --text2:#A4AFC0; --divider:#323D4D; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
-      --self:#273453; --self-border:#3C486C; --on-primary:#11151C; --primary-hover:#A7B9FF;
-      --warning-bg:#2D291F; --drop-bg:rgba(39,52,83,.96); --toast-text:#11151C;
-      --self-selection:rgba(17,21,28,.32); --card-hover-shadow:rgba(0,0,0,.55); --menu-shadow:0 12px 32px -12px rgba(0,0,0,.6);
+      --primary:#8BA4FF; --primary-hover:#A7B9FF;
+      --bg:#1A1F29; --surface:#222834; --text:#E6EAF2;
+      --text2:#A4AFC0; --divider:#2E3645; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
+      --self:#2D3A5C; --self-border:#3C486C; --on-primary:#1A1F29;
+      --warning-bg:#2D291F; --drop-bg:rgba(45,58,92,.96); --toast-text:#1A1F29;
+      --card-hover-shadow:rgba(0,0,0,.35); --menu-shadow:0 8px 24px -12px rgba(0,0,0,.4);
     }
   }
   :root[data-theme=dark] {
-    --primary:#8BA4FF; --primary-2:#6C8CFF; --glow:rgba(139,164,255,.08);
-    --bg:#11151C; --surface:#1B222D; --text:#EDF1F7;
-    --text2:#A4AFC0; --divider:#323D4D; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
-    --self:#273453; --self-border:#3C486C; --on-primary:#11151C; --primary-hover:#A7B9FF;
-    --warning-bg:#2D291F; --drop-bg:rgba(39,52,83,.96); --toast-text:#11151C;
-    --self-selection:rgba(17,21,28,.32); --card-hover-shadow:rgba(0,0,0,.55); --menu-shadow:0 12px 32px -12px rgba(0,0,0,.6);
+    --primary:#8BA4FF; --primary-hover:#A7B9FF;
+    --bg:#1A1F29; --surface:#222834; --text:#E6EAF2;
+    --text2:#A4AFC0; --divider:#2E3645; --success:#5BD4A2; --warning:#F4C66A; --danger:#FF8A80;
+    --self:#2D3A5C; --self-border:#3C486C; --on-primary:#1A1F29;
+    --warning-bg:#2D291F; --drop-bg:rgba(45,58,92,.96); --toast-text:#1A1F29;
+    --card-hover-shadow:rgba(0,0,0,.35); --menu-shadow:0 8px 24px -12px rgba(0,0,0,.4);
     color-scheme:dark;
   }
   * { box-sizing:border-box; }
   [hidden] { display:none !important; }
-  html,body { height:100%; margin:0; }
+  html,body { height:100%; margin:0; overflow-x:hidden; }
   body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-    color:var(--text); font-size:15px; line-height:1.6;
-    /* 光晕叠在 --bg 之上并淡出到 transparent，合成后的终止色即 --bg；不直接写 --bg，以保留主题切换时背景色的过渡。 */
-    background:radial-gradient(90% 420px at 50% -140px,var(--glow),transparent 75%) no-repeat fixed, var(--bg);
-    display:grid; grid-template-columns:var(--sidebar) minmax(0,1fr); grid-template-rows:var(--header-h) auto minmax(0,1fr) auto; }
-  body,header,footer,#peers,.session-card,.bubble,#overlay .card,dialog,#banner,#toast,.brand-mark,.empty .empty-icon,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
+    color:var(--text); font-size:15px; line-height:1.6; background:var(--bg);
+    display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:var(--header-h) auto minmax(0,1fr) auto; }
+  body,header,footer,#peers,.bubble,#overlay .card,#banner,#toast,.empty .empty-icon,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
   button,textarea { font:inherit; }
   button { cursor:pointer; }
   button:disabled { cursor:default; opacity:.45; }
   button:focus-visible,textarea:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
   .ui-icon { width:22px; height:22px; flex:none; vertical-align:middle; }
-  header { grid-column:2; grid-row:1; display:flex; align-items:center; gap:12px; padding:0 var(--gutter); border-bottom:1px solid var(--divider); background:var(--surface); }
+  header { grid-column:1; grid-row:1; position:relative; display:flex; align-items:center; gap:12px; padding:0 var(--gutter); border-bottom:1px solid var(--divider); background:var(--surface); }
   header .title { flex:1; min-width:0; }
   header h1 { margin:0; font-size:18px; font-weight:650; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header .sub { font-size:12px; color:var(--text2); margin-top:3px; }
@@ -66,25 +64,19 @@
   .dot.ok { background:var(--success); } .dot.warn { background:var(--warning); } .dot.bad { background:var(--danger); }
   .btn { border:1px solid var(--divider); color:var(--text); background:var(--surface); border-radius:10px; padding:8px 14px; min-height:44px; font-size:13px;
     transition:background-color .25s ease,color .25s ease,border-color .25s ease,box-shadow .2s var(--ease),transform .2s var(--ease),filter .2s var(--ease); }
-  .btn.primary { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); border-color:transparent; }
-  /* 禁用态降级为中性色，不保留渐变（与 App GradientFilledButton 一致）。 */
+  .btn.primary { background:var(--primary); color:var(--on-primary); border-color:transparent; }
+  /* 禁用态降级为中性色。 */
   .btn.primary:disabled,.icon-btn.send:disabled { background:var(--divider); color:var(--text2); opacity:1; }
-  #peersBtn { display:none; }
   main { display:contents; }
-  #list { grid-column:2; grid-row:3; min-height:0; overflow-y:auto; padding:24px var(--gutter); overscroll-behavior:contain; }
-  #peers { grid-column:1; grid-row:1 / 5; min-height:0; background:var(--surface); border-right:1px solid var(--divider); padding:0 20px 28px; overflow:auto; display:flex; flex-direction:column; }
-  /* 品牌行与右侧头部同高并延续其底部分隔线，两侧标题垂直居中对齐。 */
-  .brand { display:flex; align-items:center; gap:10px; flex:none; height:var(--header-h); margin:0 -20px 28px; padding:0 20px; border-bottom:1px solid var(--divider); font-size:17px; font-weight:700; }
-  .brand-mark { display:grid; place-items:center; width:40px; height:40px; color:var(--primary); background:var(--self); border-radius:12px; }
-  .sidebar-label { font-size:12px; color:var(--text2); margin-bottom:6px; }
-  #sidebarTitle { font-size:15px; font-weight:600; overflow-wrap:anywhere; }
-  .session-card { background:var(--bg); border:1px solid var(--divider); padding:14px; border-radius:14px; margin-bottom:28px; }
-  #peers h2 { font-size:13px; margin:0 0 14px; font-weight:600; color:var(--text2); }
+  #list { grid-column:1; grid-row:3; min-height:0; overflow-y:auto; padding:24px var(--gutter); overscroll-behavior:contain; }
+  /* 在线设备：头部下方的轻量弹出层，点击外部或 Escape 关闭。 */
+  #peers { position:absolute; right:var(--gutter); top:calc(100% + 8px); z-index:15; width:min(280px,calc(100vw - 32px)); max-height:min(60vh,360px); overflow:auto; padding:14px 16px; background:var(--surface); border:1px solid var(--divider); border-radius:16px; box-shadow:var(--menu-shadow); }
+  #peers:not([hidden]) { animation:dialog-in .2s var(--ease); }
+  #peers h2 { font-size:12px; margin:0 0 6px; font-weight:600; color:var(--text2); }
   #peers ul { padding:0; margin:0; list-style:none; }
-  #peers li { position:relative; padding:12px 0 12px 16px; font-size:14px; font-weight:500; overflow-wrap:anywhere; }
-  #peers li::before { content:""; position:absolute; left:0; top:22px; width:6px; height:6px; border-radius:50%; background:var(--success); }
+  #peers li { position:relative; padding:8px 0 8px 16px; font-size:14px; font-weight:500; overflow-wrap:anywhere; }
+  #peers li::before { content:""; position:absolute; left:0; top:17px; width:6px; height:6px; border-radius:50%; background:var(--success); }
   #peers li small { color:var(--text2); display:block; font-size:12px; font-weight:400; margin-top:2px; }
-  .sidebar-note { margin-top:auto; padding-top:36px; font-size:12px; color:var(--text2); line-height:1.8; }
   .msg { display:flex; flex-direction:column; align-items:flex-start; padding:6px 0; }
   .msg.self { align-items:flex-end; }
   /* 入场动画只作用于列表末条：renderAll 会整体重建 DOM，避免进度刷新时全部重播。 */
@@ -94,8 +86,7 @@
   .time-divider { text-align:center; font-size:12px; color:var(--text2); padding:16px 0; }
   .bubble { max-width:min(80%,560px); padding:11px 15px; border-radius:16px 16px 16px 4px; border:1px solid var(--divider);
     background:var(--surface); white-space:pre-wrap; overflow-wrap:anywhere; line-height:1.6; }
-  .msg.self .bubble { background:linear-gradient(135deg,var(--primary),var(--primary-2) 120%); border-color:transparent; color:var(--on-primary); border-radius:16px 16px 4px 16px; }
-  .msg.self .bubble:not(.file-card):not(.upload)::selection { background:var(--self-selection); color:var(--on-primary); }
+  .msg.self .bubble { background:var(--self); border-color:var(--self-border); color:var(--text); border-radius:16px 16px 4px 16px; }
   .msg .bubble.file-card,.msg.self .bubble.upload { background:var(--surface); border-color:var(--divider); color:var(--text); padding:16px; }
   .bubble.file-card { transition:background-color .25s ease,border-color .25s ease,color .25s ease,transform .2s var(--ease),box-shadow .2s var(--ease); }
   .file { display:flex; align-items:center; gap:12px; text-decoration:none; color:inherit; min-width:0; width:300px; max-width:100%; }
@@ -110,23 +101,23 @@
   .msg.self .upload.err { border-color:var(--danger); }
   .upload .status { color:var(--text2); font-size:12px; margin-top:6px; }
   .upload.err .status { color:var(--danger); }
-  footer { grid-column:2; grid-row:4; background:var(--surface); border-top:1px solid var(--divider); padding:16px var(--gutter); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
+  footer { grid-column:1; grid-row:4; background:var(--surface); border-top:1px solid var(--divider); padding:16px var(--gutter); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
   .composer { display:flex; align-items:flex-end; gap:4px; padding:6px; background:var(--bg); border:1px solid var(--divider); border-radius:16px;
     transition:background-color .25s ease,border-color .2s var(--ease),box-shadow .2s var(--ease); }
-  .composer:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--glow); }
+  .composer:focus-within { border-color:var(--primary); box-shadow:0 0 0 3px var(--self); }
   textarea { flex:1; min-width:0; resize:none; border:0; background:transparent; padding:11px 8px; max-height:140px; color:var(--text); line-height:1.5; }
   textarea::placeholder { color:var(--text2); }
   textarea:focus-visible { outline:none; }
   .icon-btn { width:44px; height:44px; display:grid; place-items:center; border:0; border-radius:12px; flex:none; background:transparent; color:var(--text2);
     transition:background-color .2s var(--ease),color .2s var(--ease),box-shadow .2s var(--ease),transform .2s var(--ease),filter .2s var(--ease); }
-  .icon-btn.send { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); }
+  .icon-btn.send { background:var(--primary); color:var(--on-primary); }
   /* hover 仅在支持悬停的指针设备上生效，避免触屏点按后粘滞。 */
   @media (hover:hover) {
     .btn:hover:not(:disabled) { background-color:var(--bg); transform:translateY(-1px); }
-    .btn.primary:hover:not(:disabled) { filter:brightness(1.07); box-shadow:0 6px 14px -6px var(--primary); }
+    .btn.primary:hover:not(:disabled) { background:var(--primary-hover); }
     .bubble.file-card:hover { transform:translateY(-1px); box-shadow:0 8px 20px -10px var(--card-hover-shadow); }
     .icon-btn:hover:not(:disabled) { background-color:var(--self); color:var(--primary); }
-    .icon-btn.send:hover:not(:disabled) { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:var(--on-primary); filter:brightness(1.07); transform:translateY(-1px); box-shadow:0 6px 14px -6px var(--primary); }
+    .icon-btn.send:hover:not(:disabled) { background:var(--primary-hover); color:var(--on-primary); }
   }
   .composer-hint { font-size:11px; color:var(--text2); padding-top:8px; text-align:center; }
   .empty { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 16px; color:var(--text2); }
@@ -149,20 +140,8 @@
   #drop .ui-icon { width:48px; height:48px; }
   #toast { position:fixed; left:50%; bottom:120px; transform:translateX(-50%); max-width:90vw; background:var(--text); color:var(--toast-text); padding:10px 18px; border-radius:12px; font-size:13px; z-index:30; }
   #toast:not([hidden]) { animation:toast-in .2s var(--ease); }
-  #banner { grid-column:2; grid-row:2; background:var(--warning-bg); color:var(--warning); font-size:13px; padding:10px var(--gutter); }
+  #banner { grid-column:1; grid-row:2; background:var(--warning-bg); color:var(--warning); font-size:13px; padding:10px var(--gutter); }
   #banner:not([hidden]) { animation:banner-in .2s var(--ease); }
-  dialog { width:min(400px,92vw); border:1px solid var(--divider); border-radius:24px; padding:28px; color:var(--text); background:var(--surface); }
-  dialog[open] { animation:dialog-in .2s var(--ease); }
-  dialog[open]::backdrop { animation:fade-in .2s var(--ease); }
-  dialog::backdrop { background:rgba(24,34,48,.3); }
-  dialog h2 { margin:0 0 8px; font-size:20px; letter-spacing:-0.4px; }
-  dialog p,dialog label { color:var(--text2); font-size:13px; }
-  dialog label { display:block; margin:20px 0 6px; }
-  dialog input { width:100%; padding:12px 14px; font:inherit; border:1px solid var(--divider); border-radius:12px; background:var(--bg); color:var(--text); }
-  dialog input:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
-  .dialog-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:24px; }
-  #peerClose { display:none; }
-  #peerBackdrop { display:none; }
   /* 设置菜单：主题与语言，样式与 App SettingsMenu 弹出菜单一致。 */
   .settings { position:relative; flex:none; }
   #settingsBtn[aria-expanded=true] { background-color:var(--self); color:var(--primary); }
@@ -177,22 +156,22 @@
     transition:background-color .2s var(--ease),color .2s var(--ease),box-shadow .2s var(--ease); }
   .segmented label .ui-icon { width:16px; height:16px; }
   .segmented input { position:absolute; opacity:0; width:1px; height:1px; pointer-events:none; }
-  .segmented label:has(input:checked) { background:var(--surface); color:var(--primary); font-weight:600; box-shadow:0 1px 2px rgba(24,34,48,.08); }
+  .segmented label:has(input:checked) { background:var(--surface); color:var(--primary); font-weight:600; box-shadow:0 1px 2px rgba(24,34,48,.06); }
+  #settingsMenu .settings-row { width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:40px; padding:0 12px; background:var(--bg); }
+  #settingsMenu .settings-row span { flex:1; min-width:0; text-align:left; font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #settingsMenu .settings-row .ui-icon { width:16px; height:16px; color:var(--text2); }
+  .name-form { display:flex; gap:8px; }
+  .name-form input { flex:1; min-width:0; height:40px; padding:0 12px; font:inherit; font-size:16px; border:1px solid var(--divider); border-radius:10px; background:var(--bg); color:var(--text); }
+  .name-form input:focus-visible { outline:2px solid var(--primary); outline-offset:1px; }
+  .name-form .btn { min-height:40px; flex:none; }
+  @media (min-width:900px) { #peers { right:calc(var(--gutter) + 56px); } }
   .segmented label:has(input:focus-visible) { outline:2px solid var(--primary); outline-offset:1px; }
   @media (hover:hover) { .segmented label:hover:not(:has(input:checked)) { color:var(--text); } }
   @media (max-width:899px) {
-    :root { --gutter:16px; --header-h:72px; }
-    body { grid-template-columns:minmax(0,1fr); }
-    header,#list,footer,#banner { grid-column:1; }
+    :root { --gutter:16px; }
     header { gap:8px; }
     header h1 { font-size:16px; }
-    #peersBtn { display:block; }
-    #renameBtn { padding:8px 10px; }
     #list { padding:16px var(--gutter); }
-    #peers { display:none; }
-    #peers.show { display:flex; position:fixed; right:0; top:0; bottom:0; width:min(300px,86vw); z-index:6; border:0; box-shadow:-8px 0 32px rgba(24,34,48,.12); }
-    #peerClose { display:grid; position:absolute; right:10px; top:calc((var(--header-h) - 44px) / 2); }
-    #peerBackdrop.show { display:block; position:fixed; inset:0; z-index:5; border:0; background:rgba(24,34,48,.25); }
     footer { padding:12px var(--gutter) calc(12px + env(safe-area-inset-bottom)); }
     .composer-hint { display:none; }
     .bubble { max-width:88%; }
@@ -202,8 +181,6 @@
   @media (prefers-reduced-motion:reduce) {
     /* 全量禁用：覆盖现有及以后新增的动画与过渡，hover 也不再位移。 */
     *, *::before, *::after { animation:none !important; transition:none !important; }
-    /* ::backdrop 单独成规则：旧浏览器不识别时不会连带丢弃上一条。 */
-    ::backdrop { animation:none !important; }
     .btn:hover, .icon-btn:hover, .bubble.file-card:hover { transform:none !important; }
   }
 </style>
@@ -260,8 +237,11 @@ SOFTWARE.
     <h1 id="title">局域网互传</h1>
     <div class="sub"><span id="dot" class="dot"></span><span id="status">正在连接…</span></div>
   </div>
-  <button id="renameBtn" class="btn" type="button" title="修改我的名称">我的名称</button>
-  <button id="peersBtn" class="btn" type="button" aria-controls="peers" aria-expanded="false">在线 <span id="peerCount">0</span></button>
+  <button id="peersBtn" class="btn" type="button" aria-controls="peers" aria-expanded="false" aria-haspopup="true">在线 <span id="peerCount">0</span></button>
+  <aside id="peers" aria-label="在线设备" hidden>
+    <h2>在线设备</h2>
+    <ul id="peerList"></ul>
+  </aside>
   <div class="settings">
     <button id="settingsBtn" class="icon-btn" type="button" aria-label="设置" title="设置" aria-haspopup="true" aria-expanded="false" aria-controls="settingsMenu"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5" /><path d="M19 7h-9" /><circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" /></svg></button>
     <div id="settingsMenu" role="group" aria-label="设置" hidden>
@@ -281,51 +261,20 @@ SOFTWARE.
           <label><input type="radio" name="language" value="en"><span lang="en">English</span></label>
         </div>
       </fieldset>
+      <fieldset>
+        <legend><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" /><path d="M10 19v-3.96 3.15" /><path d="M7 19h5" /><rect width="6" height="10" x="16" y="12" rx="2" /></svg>设备</legend>
+        <button id="renameBtn" class="btn settings-row" type="button" title="修改我的名称"><span id="myNameLabel"></span><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg></button>
+        <form id="nameForm" class="name-form" hidden>
+          <input id="nameInput" name="name" maxlength="32" required autocomplete="off" aria-label="设备名称">
+          <button class="btn primary" type="submit">保存</button>
+        </form>
+      </fieldset>
     </div>
   </div>
 </header>
 <div id="banner" role="status" hidden></div>
 <main>
-<button id="peerBackdrop" type="button" aria-label="关闭设备列表" tabindex="-1"></button>
   <div id="list" role="log" aria-live="polite" aria-label="聊天记录"></div>
-  <aside id="peers" aria-label="在线设备">
-    <button id="peerClose" class="icon-btn" type="button" aria-label="关闭设备列表"><!-- @license lucide-static v1.54.0 - ISC -->
-<svg aria-hidden="true" class="ui-icon"
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M18 6 6 18" />
-  <path d="m6 6 12 12" />
-</svg></button>
-    <div class="brand"><span class="brand-mark"><!-- @license lucide-static v1.54.0 - ISC -->
-<svg aria-hidden="true" class="ui-icon"
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" />
-  <path d="M10 19v-3.96 3.15" />
-  <path d="M7 19h5" />
-  <rect width="6" height="10" x="16" y="12" rx="2" />
-</svg></span>局域网互传</div>
-    <div class="session-card"><div class="sidebar-label">当前会话</div><div id="sidebarTitle">正在连接…</div></div>
-    <h2>在线设备</h2>
-    <ul id="peerList"></ul>
-    <p class="sidebar-note">连接同一个 Wi-Fi，文字和文件直接在设备之间传输。<br>电脑无需安装 App。</p>
-  </aside>
 </main>
 <footer>
 <div class="composer">
@@ -389,18 +338,23 @@ SOFTWARE.
   <path d="m15 15-3-3-3 3" />
 </svg>松开以发送文件</div>
 <div id="toast" role="status" hidden></div>
-<dialog id="nameDialog" aria-labelledby="nameTitle">
-  <form id="nameForm">
-    <h2 id="nameTitle">我的设备名称</h2>
-    <p>其他设备会通过这个名称识别你。</p>
-    <label for="nameInput">设备名称</label>
-    <input id="nameInput" name="name" maxlength="32" required autocomplete="off">
-    <div class="dialog-actions">
-      <button id="nameCancel" class="btn" type="button">取消</button>
-      <button class="btn primary" type="submit">保存名称</button>
-    </div>
-  </form>
-</dialog>
+<template id="emptyIcon"><!-- @license lucide-static v1.54.0 - ISC -->
+<svg aria-hidden="true" class="ui-icon"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" />
+  <path d="M10 19v-3.96 3.15" />
+  <path d="M7 19h5" />
+  <rect width="6" height="10" x="16" y="12" rx="2" />
+</svg></template>
 <script>
 (function () {
   'use strict';
@@ -515,10 +469,8 @@ SOFTWARE.
   "输入文字，或发送文件…": "Write a message, or send a file…",
   "连接后即可发送": "Connect to start sending",
   "发送": "Send",
-  "当前会话": "Current session",
   "会话详情": "Session details",
   "我的设备": "My device",
-  "连接同一个 Wi-Fi，文字和文件直接在设备之间传输。": "Connect to the same Wi-Fi to share messages and files directly between devices.",
   "你的设备，已经连在一起": "Your devices are connected",
   "会话已开启。邀请另一台设备，或先把文件放进会话。": "Your session is running. Invite another device, or add a file to the session.",
   "选择文件发送": "Choose files to send",
@@ -546,10 +498,8 @@ SOFTWARE.
   "修改我的名称": "Rename my device",
   "我的名称": "My name",
   "在线": "Online",
-  "关闭设备列表": "Close device list",
   "聊天记录": "Chat history",
   "在线设备": "Online devices",
-  "电脑无需安装 App。": "No app installation needed on computers.",
   "发送文件（也可拖拽文件到页面）": "Send files (or drag files onto the page)",
   "发送文件（也可拖拽到页面）": "Send files (or drag onto the page)",
   "输入消息": "Write a message",
@@ -557,9 +507,6 @@ SOFTWARE.
   "正在连接主机…": "Connecting to the host…",
   "重新连接": "Reconnect",
   "松开以发送文件": "Drop to send files",
-  "我的设备名称": "My device name",
-  "其他设备会通过这个名称识别你。": "Other devices will identify you by this name.",
-  "保存名称": "Save name",
   "设备": "Device",
   "浏览器": "Browser",
   "未知": "Unknown",
@@ -765,7 +712,7 @@ SOFTWARE.
     if (!state.messages.length && !state.uploads.length) {
       var empty = el('div', 'empty');
       var icon = el('div', 'empty-icon');
-      icon.appendChild(document.querySelector('.brand-mark svg').cloneNode(true));
+      icon.appendChild($('emptyIcon').content.firstElementChild.cloneNode(true));
       empty.appendChild(icon);
       empty.appendChild(el('h2', null, t("连接好了，开始互传吧")));
       empty.appendChild(el('p', null, t("发送文字，或把文件拖到这里。")));
@@ -796,11 +743,10 @@ SOFTWARE.
   function renderTitle() {
     if (!state.hostName) {
       document.title = t('局域网互传');
-      if (state.joined) els.title.textContent = $('sidebarTitle').textContent = t('局域网互传');
+      if (state.joined) els.title.textContent = t('局域网互传');
       return;
     }
     els.title.textContent = state.hostName;
-    $('sidebarTitle').textContent = state.hostName;
     document.title = state.hostName + t(" · 局域网互传");
   }
 
@@ -1019,38 +965,46 @@ SOFTWARE.
     if (els.file.files && els.file.files.length) enqueueFiles(els.file.files);
     els.file.value = '';
   });
-  function closePeers() {
-    els.peers.classList.remove('show');
-    $('peerBackdrop').classList.remove('show');
-    els.peersBtn.setAttribute('aria-expanded', 'false');
-    els.peersBtn.focus();
-  }
-  els.peersBtn.addEventListener('click', function () {
-    var open = els.peers.classList.toggle('show');
-    $('peerBackdrop').classList.toggle('show', open);
+  function setPeersOpen(open, restoreFocus) {
+    els.peers.hidden = !open;
     els.peersBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
-    if (open) $('peerClose').focus();
+    if (open) setSettingsOpen(false, false);
+    else if (restoreFocus) els.peersBtn.focus();
+  }
+  els.peersBtn.addEventListener('click', function () { setPeersOpen(els.peers.hidden, true); });
+  document.addEventListener('click', function (event) {
+    if (!els.peers.hidden && !event.target.closest('#peers, #peersBtn')) setPeersOpen(false, false);
   });
-  $('peerClose').addEventListener('click', closePeers);
-  $('peerBackdrop').addEventListener('click', closePeers);
   document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && els.peers.classList.contains('show')) closePeers();
+    if (event.key === 'Escape' && !els.peers.hidden) setPeersOpen(false, true);
   });
-  els.rename.addEventListener('click', function () {
-    $('nameInput').value = myName;
-    $('nameDialog').showModal();
-    $('nameInput').focus();
-    $('nameInput').select();
+  // 设置菜单内联改名：点击名称行切换为输入框，Enter 保存，Escape 取消。
+  function setRenaming(on, restoreFocus) {
+    els.rename.hidden = on;
+    $('nameForm').hidden = !on;
+    if (on) {
+      $('nameInput').value = myName;
+      $('nameInput').focus();
+      $('nameInput').select();
+    } else if (restoreFocus) {
+      els.rename.focus();
+    }
+  }
+  els.rename.addEventListener('click', function () { setRenaming(true); });
+  $('nameInput').addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    event.stopPropagation();
+    setRenaming(false, true);
   });
-  $('nameCancel').addEventListener('click', function () { $('nameDialog').close(); });
   $('nameForm').addEventListener('submit', function (event) {
     event.preventDefault();
     var name = $('nameInput').value.trim().slice(0, 32);
     if (!name) { $('nameInput').focus(); return; }
-    $('nameDialog').close();
+    setRenaming(false, true);
     if (name === myName) return;
     myName = name;
     storageSet('lanchat.name', name);
+    $('myNameLabel').textContent = myName;
     toast(t("名称已修改，重新连接后生效"));
     if (state.ws) state.ws.close();
   });
@@ -1089,11 +1043,14 @@ SOFTWARE.
   function syncSettingsMenu() {
     settingsMenu.querySelectorAll('input[name=theme]').forEach(function (input) { input.checked = input.value === themePref; });
     settingsMenu.querySelectorAll('input[name=language]').forEach(function (input) { input.checked = input.value === languagePref; });
+    $('myNameLabel').textContent = myName;
   }
   function setSettingsOpen(open, restoreFocus) {
     settingsMenu.hidden = !open;
     settingsBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (!open) setRenaming(false, false);
     if (open) {
+      setPeersOpen(false, false);
       syncSettingsMenu();
       var checked = settingsMenu.querySelector('input:checked');
       if (checked) checked.focus();

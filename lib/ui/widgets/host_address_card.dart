@@ -8,62 +8,10 @@ import '../../l10n/ui_strings.dart';
 import '../../server/host_session.dart';
 import '../theme.dart';
 
-/// 首页与会话详情共用的邀请面板。
+/// 聊天页顶部邀请条展开后的内容：二维码、地址与加入确认开关。
 class HostAddressCard extends StatelessWidget {
   const HostAddressCard({super.key, required this.session});
   final HostSession session;
-
-  Future<void> _chooseAccessMode(BuildContext context) async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: ListenableBuilder(
-          listenable: session,
-          builder: (context, _) => Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  context.l10n.joinOptions,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 12),
-                for (final mode in AccessMode.values)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                      mode == AccessMode.open
-                          ? LucideIcons.lockOpen
-                          : LucideIcons.shieldCheck,
-                      color: AppColors.of(context).primary,
-                    ),
-                    title: Text(
-                      mode == AccessMode.open
-                          ? context.l10n.joinDirectly
-                          : context.l10n.requireApproval,
-                    ),
-                    subtitle: Text(context.l10n.accessDescription(mode)),
-                    trailing: session.accessMode == mode
-                        ? Icon(
-                            LucideIcons.check,
-                            color: AppColors.of(context).primary,
-                          )
-                        : null,
-                    onTap: () async {
-                      await session.setAccessMode(mode);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -74,38 +22,12 @@ class HostAddressCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                LucideIcons.radio,
-                size: 16,
-                color: AppColors.of(context).success,
-              ),
-              SizedBox(width: 6),
-              Text(
-                context.l10n.sessionStarted,
-                style: TextStyle(
-                  color: AppColors.of(context).success,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-            context.l10n.scanToJoin,
-            textAlign: TextAlign.center,
-            style: textTheme.titleLarge,
-          ),
-          const SizedBox(height: 6),
           Text(
             context.l10n.scanInstructions,
             textAlign: TextAlign.center,
             style: textTheme.bodySmall,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           if (url != null) ...[
             Center(
               child: Container(
@@ -154,16 +76,11 @@ class HostAddressCard extends StatelessWidget {
             ),
           ),
           const Divider(height: 24),
-          ListTile(
+          SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(
-              LucideIcons.shieldCheck,
-              size: 22,
-              color: AppColors.of(context).textSecondary,
-            ),
             title: Text(
-              context.l10n.accessMode,
-              style: TextStyle(fontSize: 15),
+              context.l10n.requireApproval,
+              style: const TextStyle(fontSize: 15),
             ),
             subtitle: Text(
               session.accessMode == AccessMode.open
@@ -171,20 +88,9 @@ class HostAddressCard extends StatelessWidget {
                   : context.l10n.approvalDetail,
               style: textTheme.bodySmall,
             ),
-            trailing: const Icon(LucideIcons.chevronRight, size: 18),
-            onTap: () => _chooseAccessMode(context),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              session.accessMode == AccessMode.open
-                  ? context.l10n.currentDirectJoin
-                  : context.l10n.currentApproval,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.of(context).primary,
-                fontWeight: FontWeight.w600,
-              ),
+            value: session.accessMode == AccessMode.approval,
+            onChanged: (on) => session.setAccessMode(
+              on ? AccessMode.approval : AccessMode.open,
             ),
           ),
           if (session.statusMessage != null) ...[

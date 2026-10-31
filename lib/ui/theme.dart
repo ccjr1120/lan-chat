@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
     required this.primary,
-    required this.primaryGradient,
-    required this.glow,
     required this.background,
     required this.surface,
     required this.selfBubble,
@@ -21,13 +19,6 @@ class AppColors extends ThemeExtension<AppColors> {
   });
 
   final Color primary;
-
-  /// 主操作按钮与自气泡的强调渐变，与网页端 --primary/--primary-2 一致。
-  final LinearGradient primaryGradient;
-
-  /// 工作区顶部光晕色（primary 低透明度），网页端对应 --glow。
-  final Color glow;
-
   final Color background;
   final Color surface;
   final Color selfBubble;
@@ -40,20 +31,14 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color danger;
 
   static const light = AppColors(
-    primary: Color(0xFF3458E8),
-    primaryGradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFF3458E8), Color(0xFF4A76FF)],
-    ),
-    glow: Color(0x0F3458E8),
+    primary: Color(0xFF4F6FF0),
     background: Color(0xFFF7F8FA),
     surface: Color(0xFFFFFFFF),
     selfBubble: Color(0xFFEEF2FF),
     otherBubble: Color(0xFFFFFFFF),
-    textPrimary: Color(0xFF182230),
-    textSecondary: Color(0xFF667085),
-    divider: Color(0xFFE4E7EC),
+    textPrimary: Color(0xFF2B3544),
+    textSecondary: Color(0xFF707A8C),
+    divider: Color(0xFFEEF0F3),
     success: Color(0xFF16865C),
     warning: Color(0xFF9A6700),
     danger: Color(0xFFD92D20),
@@ -61,19 +46,13 @@ class AppColors extends ThemeExtension<AppColors> {
 
   static const dark = AppColors(
     primary: Color(0xFF8BA4FF),
-    primaryGradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [Color(0xFF8BA4FF), Color(0xFF6C8CFF)],
-    ),
-    glow: Color(0x148BA4FF),
-    background: Color(0xFF11151C),
-    surface: Color(0xFF1B222D),
-    selfBubble: Color(0xFF273453),
-    otherBubble: Color(0xFF1B222D),
-    textPrimary: Color(0xFFEDF1F7),
+    background: Color(0xFF1A1F29),
+    surface: Color(0xFF222834),
+    selfBubble: Color(0xFF2D3A5C),
+    otherBubble: Color(0xFF222834),
+    textPrimary: Color(0xFFE6EAF2),
     textSecondary: Color(0xFFA4AFC0),
-    divider: Color(0xFF323D4D),
+    divider: Color(0xFF2E3645),
     success: Color(0xFF5BD4A2),
     warning: Color(0xFFF4C66A),
     danger: Color(0xFFFF8A80),
@@ -85,8 +64,6 @@ class AppColors extends ThemeExtension<AppColors> {
   @override
   AppColors copyWith({
     Color? primary,
-    LinearGradient? primaryGradient,
-    Color? glow,
     Color? background,
     Color? surface,
     Color? selfBubble,
@@ -99,8 +76,6 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? danger,
   }) => AppColors(
     primary: primary ?? this.primary,
-    primaryGradient: primaryGradient ?? this.primaryGradient,
-    glow: glow ?? this.glow,
     background: background ?? this.background,
     surface: surface ?? this.surface,
     selfBubble: selfBubble ?? this.selfBubble,
@@ -118,9 +93,6 @@ class AppColors extends ThemeExtension<AppColors> {
     if (other == null) return this;
     return AppColors(
       primary: Color.lerp(primary, other.primary, t)!,
-      primaryGradient:
-          LinearGradient.lerp(primaryGradient, other.primaryGradient, t)!,
-      glow: Color.lerp(glow, other.glow, t)!,
       background: Color.lerp(background, other.background, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
       selfBubble: Color.lerp(selfBubble, other.selfBubble, t)!,
@@ -206,9 +178,7 @@ ThemeData buildAppTheme({Brightness brightness = Brightness.light}) {
     ),
     cardTheme: CardThemeData(
       color: colors.surface,
-      // 浅色模式加极轻分层阴影；暗色模式仍以边框为主。
-      elevation: dark ? 0 : 1,
-      shadowColor: const Color(0x14000000),
+      elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),

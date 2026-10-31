@@ -55,7 +55,7 @@ class MainFlutterWindow: NSWindow {
     // Match AppColors.background in lib/ui/theme.dart.
     let dark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
     self.backgroundColor = dark
-      ? NSColor(srgbRed: 17 / 255.0, green: 21 / 255.0, blue: 28 / 255.0, alpha: 1)
+      ? NSColor(srgbRed: 26 / 255.0, green: 31 / 255.0, blue: 41 / 255.0, alpha: 1)
       : NSColor(srgbRed: 247 / 255.0, green: 248 / 255.0, blue: 250 / 255.0, alpha: 1)
   }
 }

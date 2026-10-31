@@ -12,7 +12,7 @@
 
 ## 内部结构
 
-单个 `assets/web/index.html`，内联 CSS 与原生 JS（IIFE），无构建步骤或运行时第三方 JS，5 个图标从 lucide-static 1.54.0 内联，并在 HTML 中保留上游许可。主机启动时用 `rootBundle.loadString` 读入内存，在 `/` 和 `/index.html` 返回。
+单个 `assets/web/index.html`，内联 CSS 与原生 JS（IIFE），无构建步骤或运行时第三方 JS，图标从 lucide-static 1.54.0 内联，并在 HTML 中保留上游许可。主机启动时用 `rootBundle.loadString` 读入内存，在 `/` 和 `/index.html` 返回。
 
 ## 设备身份
 
@@ -24,11 +24,11 @@
 ## 依赖关系
 
 - 通过协议依赖 `server`（`/ws`、`/api/upload`、`/api/files/<id>`）。
-- 视觉规范与 `lib/ui/theme.dart` 一致（`:root` 与 `prefers-color-scheme: dark` CSS 变量），默认随系统明暗实时切换，`data-theme=light|dark` 时固定对应配色；除基础语义色外，包含派生 token `--primary-2`（与 App `primaryGradient` 渐变末色一致：light `#4A76FF` / dark `#6C8CFF`）与 `--glow`（primary 6–8% 透明度光晕色，对应 App `glow`），双端色值须逐一保持一致。
+- 视觉规范与 `lib/ui/theme.dart` 一致（`:root` 与 `prefers-color-scheme: dark` CSS 变量），默认随系统明暗实时切换，`data-theme=light|dark` 时固定对应配色；全部为纯色（无渐变、无光晕 token），浅色主色 `#4F6FF0`、分隔线 `#EEF0F3`，深色背景 `#1A1F29`、surface `#222834`；`--primary-hover` 用于主按钮 hover。双端色值须逐一保持一致。
 
 ## 视觉与动效
 
-纯 CSS 视觉层（不改 JS 逻辑、协议事件与 DOM id）：body 顶部 `--glow` 径向光晕，淡出到透明后与 `--bg` 合成，终止色即背景色；主按钮、发送按钮与自己的文字气泡使用 `--primary`→`--primary-2` 渐变，禁用时降级为中性色（不保留渐变），与 App `GradientFilledButton` 一致；自己的文字气泡用 `--self-selection` 定义 `::selection`，保证渐变底上的选区可见。微动效（列表末条消息入场、输入栏聚焦、hover、banner / toast / 全屏遮罩 / dialog 入场）统一使用 `--ease`（easeOutCubic，对应 App `AppMotion`）；末条入场仅作用于末条，避免 `renderAll` 整体重建 DOM 时全部重播，上传进度行除外。hover 微提升放在 `@media (hover: hover)` 内，避免触屏粘滞。主题切换时颜色属性过渡与 App 主题动画一致。`prefers-reduced-motion: reduce` 时以通配选择器禁用全部动画与过渡（含 `::backdrop`），hover 不再位移。
+纯 CSS 视觉层（不改协议事件）：背景为纯色 `--bg`，无顶部光晕；主按钮、发送按钮使用 `--primary` 纯色（hover 为 `--primary-hover`），禁用时降级为中性色；自己的文字气泡为 `--self` 底 + `--self-border` 边框 + `--text` 文字，与对方 surface 气泡以底色和位置区分。阴影统一减弱（菜单、文件卡 hover）。微动效（列表末条消息入场、输入栏聚焦、hover、banner / toast / 全屏遮罩 / 弹出层入场）统一使用 `--ease`（easeOutCubic，对应 App `AppMotion`）；末条入场仅作用于末条，避免 `renderAll` 整体重建 DOM 时全部重播，上传进度行除外。hover 微提升放在 `@media (hover: hover)` 内，避免触屏粘滞。主题切换时颜色属性过渡与 App 主题动画一致。`prefers-reduced-motion: reduce` 时以通配选择器禁用全部动画与过渡，hover 不再位移。
 
 ## 变更影响
 
