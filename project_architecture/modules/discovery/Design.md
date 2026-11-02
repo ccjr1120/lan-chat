@@ -23,7 +23,7 @@
 
 - 依赖：bonsoir、`core/constants.dart`。
 - 被依赖：`server`（HostSession 使用广播）、`app_ui`（首页发现列表）。
-- 平台：iOS/macOS 需要声明 `NSBonjourServices`（`_lanchat._tcp`）和 `NSLocalNetworkUsageDescription`；Android 需要 `CHANGE_WIFI_MULTICAST_STATE`（组播锁由 bonsoir_android 管理）。
+- 平台：iOS/macOS 需要声明 `NSBonjourServices`（`_lanchat._tcp`）和 `NSLocalNetworkUsageDescription`；Android 需要 `CHANGE_WIFI_MULTICAST_STATE`（组播锁由 bonsoir_android 管理）；Windows 无需声明，但 mDNS 与监听端口受 Windows 防火墙「专用 / 公用网络」策略约束。
 
 ## 变更影响
 

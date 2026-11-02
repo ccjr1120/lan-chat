@@ -1,0 +1,58 @@
+# 构建 Windows x64 包并上传到对应 GitHub Release。
+# Android / macOS 包在本机构建后随 release 一起上传；Windows 无法在 macOS 上交叉编译，因此由本流程补充。
+name: Windows release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag，例如 v1.0.1'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: 3.47.7
+          cache: true
+
+      - name: Build
+        run: |
+          flutter pub get
+          flutter build windows --release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = "lan-chat-$env:TAG-windows-x64.zip"
+          Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath $name
+          "ZIP=$name" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload to release
+        shell: bash
+        run: |
+          gh release upload "$TAG" "$ZIP" --clobber
+          # 把 Windows 包的校验值追加到 release 已有的 SHA256SUMS.txt。
+          if gh release download "$TAG" -p SHA256SUMS.txt -O SHA256SUMS.txt; then
+            grep -v -- "-windows-x64.zip" SHA256SUMS.txt > SHA256SUMS.tmp || true
+          else
+            : > SHA256SUMS.tmp
+          fi
+          sha256sum "$ZIP" | sed 's/ \*/  /' >> SHA256SUMS.tmp
+          mv SHA256SUMS.tmp SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --clobber

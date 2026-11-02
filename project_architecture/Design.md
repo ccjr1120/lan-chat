@@ -37,7 +37,8 @@ lib/
   l10n/                       中英文 ARB、生成代码、UI 本地化辅助方法
 assets/web/index.html         网页端单页聊天界面（含 mascot 绘制脚本块）
 tool/mascot/render_icons.mjs  从 mascot 脚本块生成三个平台的应用图标 PNG
-android/ ios/ macos/          flutter create 生成，补充网络权限
+android/ ios/ macos/ windows/  flutter create 生成，补充网络权限（windows/ 无需额外权限声明）
+.github/workflows/windows-release.yml  release 发布后在 windows-latest 构建 Windows x64 zip 并上传
 ```
 
 ## 模块地图
@@ -149,7 +150,7 @@ App 微动效统一为 200ms easeOutCubic，集中在 `lib/ui/widgets/motion.dar
 
 减少动态效果（App `disableAnimations`、网页 `prefers-reduced-motion`）时 A/B/D 显示静态帧，C 仍跟随真实进度；不可见时不绘制（App 由 TickerMode 停止，网页 rAF 循环只画可见画布，无可见画布即停止）。
 
-应用图标：项目不使用 flutter_launcher_icons。`tool/mascot/render_icons.mjs` 截取 index.html 的 mascot 块，用外部只读的 @napi-rs/canvas（`CANVAS_MODULE` 环境变量指定）按真实像素绘制，原地覆盖 Android `mipmap-*/ic_launcher.png`、iOS / macOS `AppIcon.appiconset` 中的 PNG（Contents.json 不变）；小于 64px 使用 mini 细节，iOS 图标为不透明 RGB。运行：`CANVAS_MODULE=/path/to/@napi-rs/canvas node tool/mascot/render_icons.mjs`。
+应用图标：项目不使用 flutter_launcher_icons。`tool/mascot/render_icons.mjs` 截取 index.html 的 mascot 块，用外部只读的 @napi-rs/canvas（`CANVAS_MODULE` 环境变量指定）按真实像素绘制，原地覆盖 Android `mipmap-*/ic_launcher.png`、iOS / macOS `AppIcon.appiconset` 中的 PNG（Contents.json 不变），并生成 Windows `windows/runner/resources/app_icon.ico`（16–256px PNG 条目，样式同 Android）；小于 64px 使用 mini 细节，iOS 图标为不透明 RGB。运行：`CANVAS_MODULE=/path/to/@napi-rs/canvas node tool/mascot/render_icons.mjs`。
 
 ## 中英文本地化
 

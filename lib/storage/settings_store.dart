@@ -112,6 +112,10 @@ class SettingsStore extends ChangeNotifier {
       final host = Platform.localHostname.split('.').first;
       return host.isNotEmpty ? host : 'Mac-$suffix';
     }
+    if (Platform.isWindows) {
+      final host = Platform.environment['COMPUTERNAME'] ?? '';
+      return host.isNotEmpty ? host : 'PC-$suffix';
+    }
     return '设备-$suffix';
   }
 }

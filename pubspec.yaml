@@ -1,7 +1,7 @@
 name: lan_chat
 description: "局域网内手机与电脑之间的文字与文件互传应用（App 主机内置 HTTP + WebSocket 服务，网页端免安装接入）。"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.10.0

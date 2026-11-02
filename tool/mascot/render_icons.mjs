@@ -7,7 +7,8 @@
 // 输出（文件名不变，Contents.json 不改）：
 // - Android mipmap-*/ic_launcher.png：猫脸 + 圆角底板，透明背景；
 // - iOS AppIcon.appiconset：满版不透明（belly 底色 + 猫脸，不画底板，由系统裁圆角），RGB 无 alpha；
-// - macOS AppIcon.appiconset：约 10% 透明边距，内部为底板 + 猫脸。
+// - macOS AppIcon.appiconset：约 10% 透明边距，内部为底板 + 猫脸；
+// - Windows runner/resources/app_icon.ico：与 Android 相同样式，16–256px 多尺寸 PNG 条目。
 // 每个尺寸按真实像素绘制，小于 64px 时使用 mini 细节。
 import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -138,3 +139,29 @@ const macDir = 'macos/Runner/Assets.xcassets/AppIcon.appiconset';
 for (const px of [16, 32, 64, 128, 256, 512, 1024]) {
   write(`${macDir}/app_icon_${px}.png`, px, 'mac');
 }
+
+// Windows：多尺寸 PNG 封装为 ICO（Vista+ 支持 PNG 条目），与 Android 同为圆角底板、透明背景。
+function encodeIco(pngs) {
+  const header = Buffer.alloc(6);
+  header.writeUInt16LE(0, 0);
+  header.writeUInt16LE(1, 2);
+  header.writeUInt16LE(pngs.length, 4);
+  const entries = [];
+  let offset = 6 + 16 * pngs.length;
+  for (const { px, png } of pngs) {
+    const e = Buffer.alloc(16);
+    e[0] = px >= 256 ? 0 : px;
+    e[1] = px >= 256 ? 0 : px;
+    e.writeUInt16LE(1, 4);
+    e.writeUInt16LE(32, 6);
+    e.writeUInt32LE(png.length, 8);
+    e.writeUInt32LE(offset, 12);
+    offset += png.length;
+    entries.push(e);
+  }
+  return Buffer.concat([header, ...entries, ...pngs.map((p) => p.png)]);
+}
+const winIcon = 'windows/runner/resources/app_icon.ico';
+const winSizes = [16, 24, 32, 48, 64, 128, 256];
+writeFileSync(join(ROOT, winIcon), encodeIco(winSizes.map((px) => ({ px, png: render(px, 'plate') }))));
+console.log('wrote', winIcon, winSizes.join('/'));

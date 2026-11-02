@@ -2,7 +2,7 @@
 
 [中文](README.md) | English
 
-Share text, images, and files between Android devices, Macs, and browsers on the same Wi-Fi network or personal hotspot. No account or external server is required.
+Share text, images, and files between Android devices, Macs, Windows PCs, and browsers on the same Wi-Fi network or personal hotspot. No account or external server is required.
 
 One device hosts a session; others join using its address or QR code. Chat history and received files are stored on the host.
 
@@ -15,7 +15,7 @@ One device hosts a session; others join using its address or QR code. Chat histo
 ## Get started
 
 1. Connect the devices to the same local network, or connect them to the host's hotspot.
-2. Open the app on an Android device or Mac and select **Create session**.
+2. Open the app on an Android device, Mac, or Windows PC and select **Create session**.
 3. In the chat, select the QR code icon in the upper right to show the connection address and QR code.
 4. On another device, enter the address on the app's home screen, scan the QR code, or open the address in a browser.
 5. Once connected, send messages and files.
@@ -49,6 +49,8 @@ Use the settings button on the home screen to change the device name, theme, or 
 **Can't connect?**
 
 Make sure the devices are on the same Wi-Fi network or hotspot, and use the complete current address and port shown by the host. Refresh the address after changing networks. Some public or corporate networks isolate devices; try a personal hotspot instead.
+
+When a Windows PC is the host, Windows Firewall prompts the first time you create a session. Allow access on **private networks**. If the current network is marked as public, change it to private in Settings, or allow the app in Windows Firewall.
 
 **Why did the session disconnect when the host went to the background?**
 

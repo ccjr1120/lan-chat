@@ -1,6 +1,6 @@
 # AGENTS.md
 
-局域网互传（lan_chat）：Flutter App（Android/iOS 优先，macOS 可用）+ 主机内置网页端。
+局域网互传（lan_chat）：Flutter App（Android/iOS 优先，macOS / Windows 可用）+ 主机内置网页端。
 本文件只负责引导，具体流程统一维护在 [AGENTS_WORKFLOW.md](AGENTS_WORKFLOW.md)，不要在此重复。
 
 ## 任务路由

@@ -41,8 +41,9 @@ WebSocket 事件与 HTTP 接口同时被 App（Dart）与网页端（`assets/web
 1. Android：`android/app/src/main/AndroidManifest.xml`、`res/xml/network_security_config.xml`。
 2. iOS：`ios/Runner/Info.plist`（`NSLocalNetworkUsageDescription`、`NSBonjourServices` 必须包含 `_lanchat._tcp`、`NSAllowsLocalNetworking`）。
 3. macOS：`macos/Runner/DebugProfile.entitlements` 与 `Release.entitlements` 同步修改。
-4. mDNS 服务类型变更时，`LanChatConstants.serviceType` 与两端 `NSBonjourServices` 必须同步。
-5. 更新 README「平台权限配置」章节。
+4. Windows：`windows/runner/`（Runner.rc 版本信息、`resources/app_icon.ico` 由 `tool/mascot/render_icons.mjs` 生成）；无权限声明，首次监听端口由系统防火墙提示用户允许。Windows 包由 `.github/workflows/windows-release.yml` 构建。
+5. mDNS 服务类型变更时，`LanChatConstants.serviceType` 与两端 `NSBonjourServices` 必须同步。
+6. 更新 README「平台权限配置」章节。
 
 ## 5. 验证
 

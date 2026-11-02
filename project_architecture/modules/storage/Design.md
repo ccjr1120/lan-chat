@@ -9,7 +9,7 @@
 | 文件 | 说明 |
 | --- | --- |
 | `lib/storage/app_storage.dart` | `AppStorage.open()`：解析目录，创建三个 store（启动时调用一次） |
-| `lib/storage/settings_store.dart` | `SettingsStore`（ChangeNotifier）：`deviceId`（首次生成 UUID）、`deviceName`、`accessMode`、`themeMode`、`locale` → `settings.json` |
+| `lib/storage/settings_store.dart` | `SettingsStore`（ChangeNotifier）：`deviceId`（首次生成 UUID）、`deviceName`（默认：iPhone/Android-XXXX，macOS 取主机名，Windows 取 `COMPUTERNAME`）、`accessMode`、`themeMode`、`locale` → `settings.json` |
 | `lib/storage/history_store.dart` | `HistoryStore`：`history.jsonl`，每行一条 `ChatMessage`，只追加，写入串行化，坏行跳过 |
 | `lib/storage/file_store.dart` | `FileStore`：`files/<fileId>/<fileName>`，先写 `.part` 再 `commit` 改名；文件 ID 和文件名经过清洗，防止路径穿越 |
 
