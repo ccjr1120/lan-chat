@@ -16,7 +16,7 @@
 
 ## 公开接口
 
-- `HostSession.start(AppStorage)`：启动服务和广播，失败时抛出异常。
+- `HostSession.start(AppStorage)`：归档旧聊天记录后启动空会话的服务和广播，失败时抛出异常；旧文件保留。
 - `HostSession.addresses / urls / primaryUrl / refreshAddresses()`：访问地址。
 - `HostSession.accessMode / setAccessMode()`：切换访问模式，同时持久化到设置。
 - `HostSession.pendingRequests / approve(deviceId) / reject(deviceId)`：处理加入请求。

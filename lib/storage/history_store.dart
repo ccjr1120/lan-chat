@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:uuid/uuid.dart';
+
 import '../core/models/chat_message.dart';
 
 /// 主机聊天记录：JSON Lines 格式，每行一条 [ChatMessage]，只追加写入。
@@ -21,13 +23,16 @@ class HistoryStore {
         .transform(const LineSplitter())
         .where((line) => line.trim().isNotEmpty)
         .toList();
-    final selected =
-        limit != null && lines.length > limit ? lines.sublist(lines.length - limit) : lines;
+    final selected = limit != null && lines.length > limit
+        ? lines.sublist(lines.length - limit)
+        : lines;
     final messages = <ChatMessage>[];
     for (final line in selected) {
       try {
         final json = jsonDecode(line);
-        if (json is Map<String, dynamic>) messages.add(ChatMessage.fromJson(json));
+        if (json is Map<String, dynamic>) {
+          messages.add(ChatMessage.fromJson(json));
+        }
       } on FormatException {
         // 跳过损坏的行（例如异常退出时写了一半）。
       }
@@ -40,6 +45,17 @@ class HistoryStore {
     _queue = _queue.then(
       (_) => file.writeAsString(line, mode: FileMode.append, flush: true),
     );
+    return _queue;
+  }
+
+  /// 为新会话归档旧记录，文件本身仍保留在原来的文件目录。
+  Future<void> archive() {
+    _queue = _queue.then((_) async {
+      if (!await file.exists()) return;
+      final archiveDir = Directory('${file.parent.path}/history_archive');
+      await archiveDir.create(recursive: true);
+      await file.rename('${archiveDir.path}/${const Uuid().v4()}.jsonl');
+    });
     return _queue;
   }
 

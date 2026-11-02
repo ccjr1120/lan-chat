@@ -29,8 +29,9 @@ class HostSession extends ChatSession {
   List<String> get addresses => _addresses;
 
   /// 首选网页访问地址，用于二维码。
-  String? get primaryUrl =>
-      _addresses.isEmpty || server.port == null ? null : 'http://${_addresses.first}:${server.port}';
+  String? get primaryUrl => _addresses.isEmpty || server.port == null
+      ? null
+      : 'http://${_addresses.first}:${server.port}';
 
   List<String> get urls => server.port == null
       ? const []
@@ -41,9 +42,14 @@ class HostSession extends ChatSession {
 
   /// 创建并启动主机会话；端口监听失败时抛出异常。
   static Future<HostSession> start(AppStorage storage) async {
+    await storage.history.archive();
     final settings = storage.settings;
     final server = LanServer(
-      host: Peer(id: settings.deviceId, name: settings.deviceName, platform: PeerPlatform.host),
+      host: Peer(
+        id: settings.deviceId,
+        name: settings.deviceName,
+        platform: PeerPlatform.host,
+      ),
       history: storage.history,
       files: storage.files,
       accessMode: settings.accessMode,
@@ -125,7 +131,11 @@ class HostSession extends ChatSession {
 
   @override
   Future<void> sendFile(LocalFileSource file) async {
-    final transfer = OutgoingTransfer(id: const Uuid().v4(), name: file.name, size: file.size);
+    final transfer = OutgoingTransfer(
+      id: const Uuid().v4(),
+      name: file.name,
+      size: file.size,
+    );
     _outgoing.add(transfer);
     notifyListeners();
     try {

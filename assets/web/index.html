@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>局域网互传</title>
+<!-- favicon 由 mascot 脚本在运行时以 32px mini 猫脸重新生成；此处为空白占位，避免浏览器请求 /favicon.ico。 -->
+<link id="favicon" rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=">
 <script>
   // 在样式解析前应用已保存的主题，避免页面先以系统外观闪烁一次。
   try { var savedTheme = localStorage.getItem('lanchat.theme'); if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme; } catch (e) { /* 隐私模式 */ }
@@ -49,14 +51,16 @@
   body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
     color:var(--text); font-size:15px; line-height:1.6; background:var(--bg);
     display:grid; grid-template-columns:minmax(0,1fr); grid-template-rows:var(--header-h) auto minmax(0,1fr) auto; }
-  body,header,footer,#peers,.bubble,#overlay .card,#banner,#toast,.empty .empty-icon,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
+  body,header,footer,#peers,.bubble,#overlay .card,#banner,#toast,.file .icon { transition:background-color .25s ease,border-color .25s ease,color .25s ease; }
   button,textarea { font:inherit; }
-  button { cursor:pointer; }
+  button, a[href] { cursor:pointer; }
+  input, textarea { cursor:text; }
   button:disabled { cursor:default; opacity:.45; }
   button:focus-visible,textarea:focus-visible,a:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
   .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
   .ui-icon { width:22px; height:22px; flex:none; vertical-align:middle; }
   header { grid-column:1; grid-row:1; position:relative; display:flex; align-items:center; gap:12px; padding:0 var(--gutter); border-bottom:1px solid var(--divider); background:var(--surface); }
+  header .brand { flex:none; display:block; }
   header .title { flex:1; min-width:0; }
   header h1 { margin:0; font-size:18px; font-weight:650; letter-spacing:-0.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   header .sub { font-size:12px; color:var(--text2); margin-top:3px; }
@@ -80,7 +84,7 @@
   .msg { display:flex; flex-direction:column; align-items:flex-start; padding:6px 0; }
   .msg.self { align-items:flex-end; }
   /* 入场动画只作用于列表末条：renderAll 会整体重建 DOM，避免进度刷新时全部重播。 */
-  #list > .msg:last-child:not(:has(.progress)) { animation:msg-in .2s var(--ease); }
+  #list > .msg:last-child:not(:has(.upload .mascot)) { animation:msg-in .2s var(--ease); }
   @keyframes msg-in { from { opacity:0; transform:translateY(8px); } }
   .meta { font-size:12px; color:var(--text2); padding:0 4px 6px; max-width:100%; overflow-wrap:anywhere; }
   .time-divider { text-align:center; font-size:12px; color:var(--text2); padding:16px 0; }
@@ -96,8 +100,6 @@
   .file .size { font-size:12px; color:var(--text2); margin-top:4px; }
   .file .dl { color:var(--primary); font-size:12px; flex:none; padding:10px 0; }
   .preview { display:block; max-width:100%; max-height:280px; object-fit:contain; border-radius:12px; margin-bottom:14px; }
-  .progress { height:4px; background:var(--divider); border-radius:4px; overflow:hidden; margin-top:14px; }
-  .progress > div { height:100%; background:var(--primary); width:0; transition:width .15s; }
   .msg.self .upload.err { border-color:var(--danger); }
   .upload .status { color:var(--text2); font-size:12px; margin-top:6px; }
   .upload.err .status { color:var(--danger); }
@@ -121,12 +123,10 @@
   }
   .composer-hint { font-size:11px; color:var(--text2); padding-top:8px; text-align:center; }
   .empty { min-height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 16px; color:var(--text2); }
-  .empty .empty-icon { display:grid; place-items:center; background:var(--self); color:var(--primary); border-radius:24px; width:72px; height:72px; margin-bottom:20px; }
-  .empty .ui-icon { width:32px; height:32px; }
+  .mascot { display:block; margin:0 auto 20px; }
+  .upload .mascot { margin:10px 0 0; }
   .empty h2 { font-size:20px; color:var(--text); margin:0 0 8px; letter-spacing:-0.4px; }
   .empty p { font-size:14px; margin:0; }
-  .spinner { width:32px; height:32px; margin:0 auto 24px; border:3px solid var(--divider); border-top-color:var(--primary); border-radius:50%; animation:spin 1s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
   @keyframes fade-in { from { opacity:0; } }
   @keyframes banner-in { from { opacity:0; transform:translateY(-8px); } }
   @keyframes toast-in { from { opacity:0; transform:translate(-50%,8px); } }
@@ -233,6 +233,7 @@ SOFTWARE.
 
 -->
 <header>
+  <canvas id="brandLogo" class="brand" width="28" height="28" aria-hidden="true"></canvas>
   <div class="title">
     <h1 id="title">局域网互传</h1>
     <div class="sub"><span id="dot" class="dot"></span><span id="status">正在连接…</span></div>
@@ -245,6 +246,14 @@ SOFTWARE.
   <div class="settings">
     <button id="settingsBtn" class="icon-btn" type="button" aria-label="设置" title="设置" aria-haspopup="true" aria-expanded="false" aria-controls="settingsMenu"><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 17H5" /><path d="M19 7h-9" /><circle cx="17" cy="17" r="3" /><circle cx="7" cy="7" r="3" /></svg></button>
     <div id="settingsMenu" role="group" aria-label="设置" hidden>
+      <fieldset>
+        <legend><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" /><path d="M10 19v-3.96 3.15" /><path d="M7 19h5" /><rect width="6" height="10" x="16" y="12" rx="2" /></svg>设备</legend>
+        <button id="renameBtn" class="btn settings-row" type="button" title="修改我的名称"><span id="myNameLabel"></span><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg></button>
+        <form id="nameForm" class="name-form" hidden>
+          <input id="nameInput" name="name" maxlength="32" required autocomplete="off" aria-label="设备名称">
+          <button class="btn primary" type="submit">保存</button>
+        </form>
+      </fieldset>
       <fieldset>
         <legend><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 3v1" /><path d="M12 20v1" /><path d="M3 12h1" /><path d="M20 12h1" /><path d="m18.364 5.636-.707.707" /><path d="m6.343 17.657-.707.707" /><path d="m5.636 5.636.707.707" /><path d="m17.657 17.657.707.707" /></svg>主题</legend>
         <div class="segmented">
@@ -260,14 +269,6 @@ SOFTWARE.
           <label><input type="radio" name="language" value="zh-CN"><span lang="zh-CN">简体中文</span></label>
           <label><input type="radio" name="language" value="en"><span lang="en">English</span></label>
         </div>
-      </fieldset>
-      <fieldset>
-        <legend><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" /><path d="M10 19v-3.96 3.15" /><path d="M7 19h5" /><rect width="6" height="10" x="16" y="12" rx="2" /></svg>设备</legend>
-        <button id="renameBtn" class="btn settings-row" type="button" title="修改我的名称"><span id="myNameLabel"></span><!-- @license lucide-static v1.54.0 - ISC --><svg aria-hidden="true" class="ui-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" /><path d="m15 5 4 4" /></svg></button>
-        <form id="nameForm" class="name-form" hidden>
-          <input id="nameInput" name="name" maxlength="32" required autocomplete="off" aria-label="设备名称">
-          <button class="btn primary" type="submit">保存</button>
-        </form>
       </fieldset>
     </div>
   </div>
@@ -314,7 +315,7 @@ SOFTWARE.
 </footer>
 <div id="overlay" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
   <div class="card">
-    <div id="overlaySpinner" class="spinner"></div>
+    <canvas id="overlaySpinner" class="mascot" width="96" height="96" aria-hidden="true"></canvas>
     <h2 id="overlayTitle">正在连接主机…</h2>
     <p id="overlayDetail" style="color:var(--text2)"></p>
     <button id="overlayBtn" class="btn primary" type="button" hidden>重新连接</button>
@@ -338,23 +339,508 @@ SOFTWARE.
   <path d="m15 15-3-3-3 3" />
 </svg>松开以发送文件</div>
 <div id="toast" role="status" hidden></div>
-<template id="emptyIcon"><!-- @license lucide-static v1.54.0 - ISC -->
-<svg aria-hidden="true" class="ui-icon"
-  xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
->
-  <path d="M18 8V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h8" />
-  <path d="M10 19v-3.96 3.15" />
-  <path d="M7 19h5" />
-  <rect width="6" height="10" x="16" y="12" rx="2" />
-</svg></template>
+<script>
+// LanChat 吉祥物：几何化蓝猫，纯 Canvas 2D 绘制、确定性输出。
+// 几何与参数需与 lib/ui/widgets/mascot_painter.dart ↔ assets/web/index.html 中 mascot 脚本块
+// （mascot:begin … mascot:end）保持逐行一致，源自 lanchat-mascot/cat.js。
+// tool/mascot/render_icons.mjs 直接截取该块生成各平台图标，块内不得引用 DOM。
+(function () {
+  'use strict';
+  /* mascot:begin */
+  var PALETTES = {
+    light: {
+      body: '#4F6FF0', shade: '#3F5EDC', belly: '#EEF2FF', bg: '#F7F8FA', card: '#FFFFFF',
+      line: '#2B3544', track: '#EEF0F3', eye: '#F4C66A', nose: '#FF8FA3'
+    },
+    dark: {
+      body: '#8BA4FF', shade: '#6F8BEF', belly: '#EEF2FF', bg: '#1A1F29', card: '#222834',
+      line: '#E6EAF2', track: '#2E3645', eye: '#F4C66A', nose: '#FF8FA3'
+    }
+  };
+
+  var FRAMES = {
+    blink: { count: 8, ms: 200, loop: 1600 },
+    paw: { count: 8, ms: 150, loop: 1200 },
+    tail: { count: 5, ms: 750, loop: 3000, keys: [0, 0.25, 0.5, 0.75, 1] },
+    sleep: { count: 6, ms: 400, loop: 2400 }
+  };
+
+  // 减少动态效果时 A/B/D 使用的静态帧 k。
+  var STATIC_K = { blink: 0, paw: 0.25, tail: 0, sleep: 0 };
+
+  var BLINK = [0, 0, 1, 1, 0.4, 0, 0, 0];
+  var EAR = [0, 0, 0, 0, 0, -12, 4, 0];
+  var INK = '#2B3544';
+  var D2R = Math.PI / 180;
+  var TAU = Math.PI * 2;
+
+  function clamp(v, lo, hi) {
+    return v < lo ? lo : v > hi ? hi : v;
+  }
+
+  // k is the normalised loop position (0..1); frame i of N uses k = i / N.
+  function animParams(name, k) {
+    var kk = ((k % 1) + 1) % 1;
+    if (name === 'blink') {
+      var i = Math.floor(kk * 8 + 1e-6) % 8;
+      return { pose: 'sit', blink: BLINK[i], earTwitch: EAR[i] };
+    }
+    if (name === 'paw') {
+      return { pose: 'sit', pawAngle: 22 * Math.sin(TAU * kk), ballPhase: kk };
+    }
+    if (name === 'tail') {
+      var p = clamp(k, 0, 1);
+      return { pose: 'walk', progress: p, tailAngle: 18 * Math.sin(p * 4 * Math.PI + Math.PI / 2) };
+    }
+    if (name === 'sleep') {
+      return { pose: 'sleep', breath: Math.sin(TAU * kk), zPhase: kk };
+    }
+    return { pose: 'face' };
+  }
+
+  function roundRectPath(ctx, x, y, w, h, r) {
+    var rr = Math.max(0, Math.min(r, w / 2, h / 2));
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.lineTo(x + w - rr, y);
+    ctx.arc(x + w - rr, y + rr, rr, -Math.PI / 2, 0);
+    ctx.lineTo(x + w, y + h - rr);
+    ctx.arc(x + w - rr, y + h - rr, rr, 0, Math.PI / 2);
+    ctx.lineTo(x + rr, y + h);
+    ctx.arc(x + rr, y + h - rr, rr, Math.PI / 2, Math.PI);
+    ctx.lineTo(x, y + rr);
+    ctx.arc(x + rr, y + rr, rr, Math.PI, Math.PI * 1.5);
+    ctx.closePath();
+  }
+
+  function ellipsePath(ctx, cx, cy, rx, ry) {
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, Math.max(rx, 0.01), Math.max(ry, 0.01), 0, 0, TAU);
+  }
+
+  function circlePath(ctx, cx, cy, r) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, TAU);
+  }
+
+  function fill(ctx, color) {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function stroke(ctx, color, width) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.stroke();
+  }
+
+  function triPath(ctx, ax, ay, bx, by, cx, cy) {
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(bx, by);
+    ctx.lineTo(cx, cy);
+    ctx.closePath();
+  }
+
+  // Ear triangle anchored inside the head circle; twist rotates it about its base.
+  function drawEar(ctx, P, side, hr, twist) {
+    var bx1 = side * hr * 0.95, by1 = -hr * 0.2;
+    var tx = side * hr * 0.8, ty = -hr * 1.25;
+    var bx2 = side * hr * 0.2, by2 = -hr * 0.9;
+    var px = (bx1 + bx2) / 2, py = (by1 + by2) / 2;
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(twist * D2R);
+    ctx.translate(-px, -py);
+    triPath(ctx, bx1, by1, tx, ty, bx2, by2);
+    fill(ctx, P.body);
+    stroke(ctx, P.body, hr * 0.12);
+    var gx = (bx1 + tx + bx2) / 3, gy = (by1 + ty + by2) / 3;
+    var s = 0.52, lift = hr * 0.08;
+    var ix = function (vx) { return gx + (vx - gx) * s; };
+    var iy = function (vy) { return gy + (vy - gy) * s - lift; };
+    triPath(ctx, ix(bx1), iy(by1), ix(tx), iy(ty), ix(bx2), iy(by2));
+    fill(ctx, P.belly);
+    ctx.restore();
+  }
+
+  function closedEye(ctx, x, y, rx, ry, width) {
+    ctx.beginPath();
+    ctx.moveTo(x - rx, y);
+    ctx.quadraticCurveTo(x, y + ry * 0.75, x + rx, y);
+    stroke(ctx, INK, width);
+  }
+
+  // Head centred at the current origin. mode: 'open' | 'sleep'.
+  function drawHead(ctx, P, o, hr, mini, mode) {
+    drawEar(ctx, P, -1, hr, o.earTwitch || 0);
+    drawEar(ctx, P, 1, hr, 0);
+    circlePath(ctx, 0, 0, hr);
+    fill(ctx, P.body);
+
+    var ex = hr * 0.38, ey = -hr * 0.02;
+    var erx = hr * (mini ? 0.2 : 0.15), ery = hr * (mini ? 0.25 : 0.2);
+    var open = mode === 'sleep' ? 0 : 1 - clamp(o.blink || 0, 0, 1);
+    [-1, 1].forEach(function (side) {
+      var x = side * ex;
+      if (open < 0.12) {
+        closedEye(ctx, x, ey, erx * 1.05, ery, hr * (mini ? 0.1 : 0.06));
+        return;
+      }
+      ellipsePath(ctx, x, ey, erx, ery * open);
+      fill(ctx, P.eye);
+      ellipsePath(ctx, x, ey, erx * (mini ? 0.45 : 0.3), ery * open * 0.8);
+      fill(ctx, INK);
+      if (!mini) {
+        circlePath(ctx, x - erx * 0.35, ey - ery * open * 0.42, erx * 0.22);
+        fill(ctx, '#FFFFFF');
+      }
+    });
+
+    var nw = hr * (mini ? 0.13 : 0.09);
+    var ny = hr * 0.22;
+    triPath(ctx, -nw, ny, nw, ny, 0, ny + nw * 1.2);
+    fill(ctx, P.nose);
+    stroke(ctx, P.nose, hr * 0.04);
+
+    if (mini) return;
+    var my = ny + nw * 1.2;
+    ctx.beginPath();
+    ctx.moveTo(-hr * 0.15, my + hr * 0.04);
+    ctx.quadraticCurveTo(-hr * 0.07, my + hr * 0.12, 0, my);
+    ctx.quadraticCurveTo(hr * 0.07, my + hr * 0.12, hr * 0.15, my + hr * 0.04);
+    stroke(ctx, INK, hr * 0.04);
+
+    [-1, 1].forEach(function (side) {
+      for (var j = 0; j < 3; j++) {
+        var dy = (j - 1) * hr * 0.11;
+        ctx.beginPath();
+        ctx.moveTo(side * hr * 0.5, hr * 0.26 + dy);
+        ctx.lineTo(side * hr * 1.18, hr * 0.19 + dy * 1.9);
+        stroke(ctx, P.line, hr * 0.035);
+      }
+    });
+  }
+
+  // Tail as a thick quadratic stroke in tail-local space, rotated about its base.
+  function drawTail(ctx, P, bx, by, angle, cx, cy, tx, ty, width) {
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(angle * D2R);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(cx, cy, tx, ty);
+    stroke(ctx, P.body, width);
+    ctx.restore();
+  }
+
+  function drawLimb(ctx, color, padColor, sx, sy, angle, len, w) {
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(angle * D2R);
+    roundRectPath(ctx, -w / 2, -w / 2, w, len + w / 2, w / 2);
+    fill(ctx, color);
+    if (padColor) {
+      ellipsePath(ctx, 0, len - w * 0.1, w * 0.36, w * 0.26);
+      fill(ctx, padColor);
+    }
+    ctx.restore();
+  }
+
+  function drawBall(ctx, P, phase, mini) {
+    var r = 7;
+    var dx = -9 * Math.cos(TAU * phase);
+    var bx = 30 + dx;
+    var ground = function (x) { return 45 - 3 * ((x - 30) / 12) * ((x - 30) / 12); };
+    if (!mini) {
+      ctx.beginPath();
+      for (var x = 16; x <= 44; x += 2) {
+        if (x === 16) ctx.moveTo(x, ground(x));
+        else ctx.lineTo(x, ground(x));
+      }
+      stroke(ctx, P.track, 1.6);
+    }
+    var by = ground(bx) - r;
+    circlePath(ctx, bx, by, r);
+    fill(ctx, P.eye);
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.rotate(dx / r);
+    ctx.globalAlpha = 0.45;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.8, 0);
+    ctx.lineTo(r * 0.8, 0);
+    stroke(ctx, INK, mini ? 2.2 : 1.4);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+    if (!mini) {
+      circlePath(ctx, bx - r * 0.38, by - r * 0.4, r * 0.2);
+      fill(ctx, '#FFFFFF');
+    }
+  }
+
+  function drawSit(ctx, P, o, mini) {
+    var hasBall = o.ballPhase !== undefined && o.ballPhase !== null;
+    ctx.save();
+    ctx.translate(hasBall ? -10 : 0, 0);
+    drawTail(ctx, P, -19, 38, -(o.tailAngle || 0), -19, -2, -17, -24, 7);
+    ellipsePath(ctx, 0, 22, 25, 23);
+    fill(ctx, P.body);
+    if (!mini) {
+      ellipsePath(ctx, -16, 38, 9, 7);
+      fill(ctx, P.shade);
+      ellipsePath(ctx, 16, 38, 9, 7);
+      fill(ctx, P.shade);
+    }
+    ellipsePath(ctx, 0, 27, 13, 16);
+    fill(ctx, P.belly);
+    var pad = mini ? null : P.belly;
+    drawLimb(ctx, P.body, pad, -9, 20, 10, 23, 10);
+    drawLimb(ctx, P.body, pad, 9, 20, -(10 + (o.pawAngle || 0)), 23, 10);
+    ctx.save();
+    ctx.translate(0, -14);
+    drawHead(ctx, P, o, 24, mini, 'open');
+    ctx.restore();
+    if (hasBall) drawBall(ctx, P, o.ballPhase, mini);
+    ctx.restore();
+  }
+
+  function drawWalk(ctx, P, o, mini) {
+    var p = clamp(o.progress || 0, 0, 1);
+    var tx0 = -44, tw = 88, ty = 40, th = 5;
+    roundRectPath(ctx, tx0, ty, tw, th, th / 2);
+    fill(ctx, P.track);
+    if (p > 0) {
+      roundRectPath(ctx, tx0, ty, Math.max(th, tw * p), th, th / 2);
+      fill(ctx, P.body);
+    }
+    var s = Math.cos(p * 6 * Math.PI) * 22;
+    ctx.save();
+    ctx.translate(-24 + 44 * p, 0);
+    drawLimb(ctx, P.shade, null, -9, 20, s, 16, 6);
+    drawLimb(ctx, P.shade, null, 13, 20, -s, 16, 6);
+    drawTail(ctx, P, -17, 12, o.tailAngle || 0, -14, -6, -8, -22, 6);
+    roundRectPath(ctx, -20, 7, 40, 19, 9.5);
+    fill(ctx, P.body);
+    if (!mini) {
+      ellipsePath(ctx, 3, 22, 11, 3.5);
+      fill(ctx, P.belly);
+    }
+    drawLimb(ctx, P.body, null, -12, 20, -s, 16, 6.5);
+    drawLimb(ctx, P.body, null, 10, 20, s, 16, 6.5);
+    ctx.save();
+    ctx.translate(20, 2);
+    drawHead(ctx, P, o, 13, mini, 'open');
+    ctx.restore();
+    ctx.restore();
+  }
+
+  function zPath(ctx, s) {
+    ctx.beginPath();
+    ctx.moveTo(-s / 2, -s / 2);
+    ctx.lineTo(s / 2, -s / 2);
+    ctx.lineTo(-s / 2, s / 2);
+    ctx.lineTo(s / 2, s / 2);
+  }
+
+  function drawSleep(ctx, P, o, mini) {
+    var b = clamp(o.breath || 0, -1, 1);
+    ctx.save();
+    ctx.translate(0, 40);
+    ctx.scale(1 + 0.02 * b, 1 + 0.06 * b);
+    ctx.translate(0, -40);
+    ellipsePath(ctx, 4, 23, 32, 17);
+    fill(ctx, P.body);
+    if (!mini) {
+      ellipsePath(ctx, 20, 28, 13, 9);
+      fill(ctx, P.shade);
+    }
+    ctx.beginPath();
+    ctx.moveTo(33, 30);
+    ctx.quadraticCurveTo(26, 46, -14, 41);
+    stroke(ctx, P.body, 8);
+    ctx.restore();
+
+    ellipsePath(ctx, -9, 37.5, 6, 3.5);
+    fill(ctx, P.belly);
+    ellipsePath(ctx, 1, 38.5, 6, 3.5);
+    fill(ctx, P.belly);
+
+    ctx.save();
+    ctx.translate(-18, 15 - 1.4 * b);
+    ctx.rotate(-12 * D2R);
+    drawHead(ctx, P, o, 17, mini, 'sleep');
+    ctx.restore();
+
+    var zp = o.zPhase || 0;
+    for (var j = 0; j < 3; j++) {
+      var ph = (((zp + j / 3) % 1) + 1) % 1;
+      ctx.save();
+      ctx.globalAlpha = 1 - ph;
+      ctx.translate(2 + 26 * ph, -10 - 30 * ph + 3 * Math.sin(ph * TAU));
+      zPath(ctx, 5 + 6 * ph);
+      stroke(ctx, P.line, mini ? 3 : 1.8);
+      ctx.restore();
+    }
+  }
+
+  function drawFace(ctx, P, o, mini) {
+    if (o.plate) {
+      roundRectPath(ctx, -50, -50, 100, 100, 24);
+      fill(ctx, o.palette === 'dark' ? P.track : P.belly);
+    }
+    var hr = o.plate ? (mini ? 33 : 30) : 36;
+    ctx.save();
+    ctx.translate(0, o.plate ? (mini ? 9 : 8) : 6);
+    drawHead(ctx, P, o, hr, mini, 'open');
+    ctx.restore();
+  }
+
+  function drawCat(ctx, opts) {
+    var o = Object.assign({
+      palette: 'light', detail: 'full', blink: 0, earTwitch: 0, pawAngle: 0, tailAngle: 0,
+      progress: 0, pose: 'face', x: 0, y: 0, size: 100, plate: false, breath: 0, zPhase: 0
+    }, opts || {});
+    var P = PALETTES[o.palette] || PALETTES.light;
+    var mini = o.detail === 'mini';
+    ctx.save();
+    ctx.translate(o.x, o.y);
+    ctx.scale(o.size / 100, o.size / 100);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    if (o.pose === 'sit') drawSit(ctx, P, o, mini);
+    else if (o.pose === 'walk') drawWalk(ctx, P, o, mini);
+    else if (o.pose === 'sleep') drawSleep(ctx, P, o, mini);
+    else drawFace(ctx, P, o, mini);
+    ctx.restore();
+  }
+  /* mascot:end */
+
+  // ---------------------------------------------------------------- 统一控制器
+  // 全局只有一个 rAF 循环，只绘制仍在 DOM 中且可见（offsetParent !== null）的动画画布；
+  // 没有可见动画时停止循环，wake() 重新启动。减少动态效果时只画静态帧；C（tail）不进循环。
+  var reducedQuery = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  var darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  var entries = [];
+  var rafId = 0;
+
+  function reduced() { return !!(reducedQuery && reducedQuery.matches); }
+  function themeName() {
+    var forced = document.documentElement.dataset.theme;
+    if (forced === 'light' || forced === 'dark') return forced;
+    return darkQuery && darkQuery.matches ? 'dark' : 'light';
+  }
+  function animated(e) { return e.anim === 'blink' || e.anim === 'paw' || e.anim === 'sleep'; }
+  function visible(e) { return e.canvas.isConnected && e.canvas.offsetParent !== null; }
+  function kAt(name, t) {
+    var f = FRAMES[name];
+    if (name === 'blink') return Math.floor(t / f.ms) % f.count / f.count;
+    return (t % f.loop) / f.loop;
+  }
+
+  function paint(e, t) {
+    var ctx = e.ctx;
+    var dpr = e.dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, e.canvas.width, e.canvas.height);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var params;
+    if (e.anim === 'tail') params = animParams('tail', e.progress || 0);
+    else if (animated(e)) params = animParams(e.anim, reduced() || t == null ? STATIC_K[e.anim] : kAt(e.anim, t));
+    else params = { pose: 'face', plate: true };
+    var o = { palette: themeName(), detail: e.mini ? 'mini' : 'full', x: e.size / 2, y: e.size / 2, size: e.size };
+    for (var key in params) o[key] = params[key];
+    drawCat(ctx, o);
+  }
+
+  function prune() {
+    entries = entries.filter(function (e) { return e.canvas.isConnected; });
+  }
+
+  function tick(t) {
+    rafId = 0;
+    prune();
+    if (reduced()) return;
+    var active = false;
+    entries.forEach(function (e) {
+      if (!animated(e) || !visible(e)) return;
+      active = true;
+      paint(e, t);
+    });
+    if (active) rafId = requestAnimationFrame(tick);
+  }
+
+  function wake() {
+    if (rafId || reduced()) return;
+    if (entries.some(function (e) { return animated(e) && visible(e); })) rafId = requestAnimationFrame(tick);
+  }
+
+  function find(canvas) {
+    for (var i = 0; i < entries.length; i++) if (entries[i].canvas === canvas) return entries[i];
+    return null;
+  }
+
+  // opts: { anim: 'blink' | 'paw' | 'sleep' | 'tail' | 'face', size, mini, progress }
+  function mount(canvas, opts) {
+    prune();
+    var size = opts.size || 96;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(size * dpr);
+    canvas.height = Math.round(size * dpr);
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    var e = find(canvas);
+    if (!e) { e = { canvas: canvas }; entries.push(e); }
+    e.ctx = canvas.getContext('2d');
+    e.dpr = dpr;
+    e.size = size;
+    e.anim = opts.anim || 'face';
+    e.mini = opts.mini == null ? size < 64 : !!opts.mini;
+    e.progress = opts.progress || 0;
+    paint(e, null);
+    wake();
+    return canvas;
+  }
+
+  function setProgress(canvas, p) {
+    var e = find(canvas);
+    if (!e) return;
+    e.progress = p;
+    paint(e, null);
+  }
+
+  function updateFavicon() {
+    var link = document.getElementById('favicon');
+    if (!link) return;
+    var c = document.createElement('canvas');
+    c.width = 32; c.height = 32;
+    drawCat(c.getContext('2d'), { palette: themeName(), detail: 'mini', pose: 'face', plate: true, x: 16, y: 16, size: 32 });
+    try { link.href = c.toDataURL('image/png'); } catch (err) { /* 保留默认 */ }
+  }
+
+  // 主题或动效偏好变化后立即重绘（不在可见范围的画布也更新静态帧）。
+  function redraw() {
+    prune();
+    entries.forEach(function (e) { paint(e, null); });
+    updateFavicon();
+    wake();
+  }
+
+  function listen(query, fn) {
+    if (!query) return;
+    if (query.addEventListener) query.addEventListener('change', fn);
+    else if (query.addListener) query.addListener(fn);
+  }
+  listen(reducedQuery, redraw);
+  listen(darkQuery, redraw);
+
+  window.LanMascot = {
+    PALETTES: PALETTES, FRAMES: FRAMES, animParams: animParams, drawCat: drawCat,
+    mount: mount, setProgress: setProgress, redraw: redraw, wake: wake
+  };
+  updateFavicon();
+})();
+</script>
 <script>
 (function () {
   'use strict';
@@ -697,10 +1183,11 @@ SOFTWARE.
     head.appendChild(btn);
     box.appendChild(head);
     if (!u.error) {
-      var bar = el('div', 'progress'), fill = el('div');
-      fill.style.width = pct + '%';
-      bar.appendChild(fill);
-      box.appendChild(bar);
+      // C 尾巴进度：跟随真实 sent/size，renderAll 每次重建时挂载并绘制一次。
+      var tail = el('canvas', 'mascot');
+      tail.setAttribute('aria-hidden', 'true');
+      box.appendChild(tail);
+      window.LanMascot.mount(tail, { anim: 'tail', size: 64, progress: u.size > 0 ? Math.min(1, u.sent / u.size) : 0 });
     }
     row.appendChild(box);
     return row;
@@ -711,12 +1198,13 @@ SOFTWARE.
     els.list.textContent = '';
     if (!state.messages.length && !state.uploads.length) {
       var empty = el('div', 'empty');
-      var icon = el('div', 'empty-icon');
-      icon.appendChild($('emptyIcon').content.firstElementChild.cloneNode(true));
-      empty.appendChild(icon);
+      var sleeper = el('canvas', 'mascot');
+      sleeper.setAttribute('aria-hidden', 'true');
+      empty.appendChild(sleeper);
       empty.appendChild(el('h2', null, t("连接好了，开始互传吧")));
       empty.appendChild(el('p', null, t("发送文字，或把文件拖到这里。")));
       els.list.appendChild(empty);
+      window.LanMascot.mount(sleeper, { anim: 'sleep', size: 96 });
       return;
     }
     var frag = document.createDocumentFragment();
@@ -786,6 +1274,8 @@ SOFTWARE.
     els.overlayDetail.textContent = detail ? detail() : '';
     els.overlaySpinner.hidden = !opts.spinner;
     els.overlayBtn.hidden = !opts.button;
+    // 遮罩可见性变化后唤醒动画循环；隐藏时循环按可见性自动停止。
+    window.LanMascot.wake();
   }
   function hideOverlay() { els.overlay.hidden = true; }
   // ------------------------------------------------------------------ WebSocket
@@ -1022,6 +1512,7 @@ SOFTWARE.
     if (value === 'system') delete document.documentElement.dataset.theme;
     else document.documentElement.dataset.theme = value;
     storageSet('lanchat.theme', value);
+    window.LanMascot.redraw();
   }
   function applyLanguage(value) {
     languagePref = value;
@@ -1100,6 +1591,9 @@ SOFTWARE.
     if (files && files.length) { e.preventDefault(); enqueueFiles(files); }
   });
 
+  // A 眨眼抖耳：连接遮罩；品牌：头部静态猫脸。
+  window.LanMascot.mount(els.overlaySpinner, { anim: 'blink', size: 96 });
+  window.LanMascot.mount($('brandLogo'), { anim: 'face', size: 28 });
   renderAll();
   connect();
 })();

@@ -15,16 +15,17 @@ import '../../../l10n/ui_strings.dart';
 import '../../../server/host_session.dart';
 import '../../format.dart';
 import '../../theme.dart';
+import '../../widgets/feature_icon.dart';
 import '../../widgets/host_address_card.dart';
+import '../../widgets/mascot.dart';
 import '../../widgets/message_bubble.dart';
 import '../../widgets/motion.dart';
-import '../../widgets/settings_menu.dart';
 import '../../widgets/workspace_panel.dart';
 
 /// 聊天页：主机与客户端共用，通过 [ChatSession] 区分行为。
 ///
 /// 客户端会话由本页持有，返回首页时断开连接；
-/// 主机会话由首页持有（返回首页后服务继续运行），加入请求弹窗也由首页统一处理。
+/// 主机会话由首页持有，返回首页后结束；加入请求弹窗由首页统一处理。
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.session, required this.ownsSession});
 
@@ -42,7 +43,7 @@ class _ChatPageState extends State<ChatPage> {
   final ScrollController _scroll = ScrollController();
   final FocusNode _inputFocus = FocusNode();
   int _lastCount = 0;
-  late bool _inviteExpanded = session.isHost;
+  bool _showInvite = false;
 
   /// 已进入过列表的消息 id，滚动重建时不重放入场动画。
   final Set<String> _seenMessageIds = {};
@@ -185,30 +186,6 @@ class _ChatPageState extends State<ChatPage> {
     _toast(strings.copied);
   }
 
-  Future<void> _confirmClearHistory(HostSession host) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.clearHistory),
-        content: Text(context.l10n.clearHistoryDetail),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(context.l10n.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.of(context).danger,
-            ),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(context.l10n.clear),
-          ),
-        ],
-      ),
-    );
-    if (ok == true) await host.clearHistory();
-  }
-
   /// 仅当有其他设备在线时才确认；没有人在线可直接结束。
   Future<bool> _confirmEndSession(HostSession host) async {
     if (host.peers.length <= 1) return true;
@@ -283,66 +260,55 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
               actions: [
-                const SettingsMenu(),
                 _PeersMenu(session: s),
                 if (host != null)
-                  PopupMenuButton<String>(
-                    onSelected: (v) async {
-                      if (v == 'clear') {
-                        await _confirmClearHistory(host);
-                      } else if (v == 'end') {
-                        final ok = await _confirmEndSession(host);
-                        if (ok && mounted) Navigator.of(this.context).pop();
-                      }
+                  IconButton(
+                    tooltip: _showInvite
+                        ? context.l10n.hideInvitePanel
+                        : context.l10n.showInvitePanel,
+                    icon: const Icon(LucideIcons.qrCode),
+                    isSelected: _showInvite,
+                    onPressed: () {
+                      FocusManager.instance.primaryFocus?.unfocus();
+                      setState(() => _showInvite = !_showInvite);
                     },
-                    itemBuilder: (_) => [
-                      PopupMenuItem(
-                        value: 'clear',
-                        child: Text(context.l10n.clearHistory),
-                      ),
-                      PopupMenuItem(
-                        value: 'end',
-                        child: Text(context.l10n.endSession),
-                      ),
-                    ],
                   ),
               ],
             ),
-            body: Column(
+            body: Stack(
+              fit: StackFit.expand,
               children: [
-                _StatusBanner(session: s),
-                if (host != null)
-                  _InviteBar(
-                    session: host,
-                    expanded: _inviteExpanded,
-                    onToggle: () =>
-                        setState(() => _inviteExpanded = !_inviteExpanded),
-                  ),
-                Expanded(
-                  child: WorkspaceBackground(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 880),
-                        child: AnimatedSwitcher(
-                          duration: AppMotion.durationOf(context),
-                          switchInCurve: AppMotion.curve,
-                          switchOutCurve: AppMotion.curve,
-                          child: KeyedSubtree(
-                            key: ValueKey(_bodyStateKey(s)),
-                            child: _buildBody(s),
+                Column(
+                  children: [
+                    _StatusBanner(session: s),
+                    Expanded(
+                      child: WorkspaceBackground(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 880),
+                            child: AnimatedSwitcher(
+                              duration: AppMotion.durationOf(context),
+                              switchInCurve: AppMotion.curve,
+                              switchOutCurve: AppMotion.curve,
+                              child: KeyedSubtree(
+                                key: ValueKey(_bodyStateKey(s)),
+                                child: _buildBody(s),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
+                    _Composer(
+                      controller: _input,
+                      focusNode: _inputFocus,
+                      enabled: _canSend,
+                      onSend: _sendText,
+                      onAttach: _pickAndSendFiles,
+                    ),
+                  ],
                 ),
-                _Composer(
-                  controller: _input,
-                  focusNode: _inputFocus,
-                  enabled: _canSend,
-                  onSend: _sendText,
-                  onAttach: _pickAndSendFiles,
-                ),
+                if (host != null && _showInvite) _InvitePanel(session: host),
               ],
             ),
           ),
@@ -380,9 +346,13 @@ class _ChatPageState extends State<ChatPage> {
     if (s.status == SessionStatus.pending) {
       return _CenteredState(
         icon: LucideIcons.hourglass,
+        art: MascotLoader(
+          anim: MascotAnim.blink,
+          size: 96,
+          semanticLabel: context.l10n.awaitingApproval,
+        ),
         title: context.l10n.awaitingApproval,
         detail: context.l10n.approvalPendingDetail,
-        showProgress: true,
       );
     }
     if (s.status == SessionStatus.rejected) {
@@ -405,12 +375,27 @@ class _ChatPageState extends State<ChatPage> {
     if (messages.isEmpty && outgoing.isEmpty) {
       return _CenteredState(
         icon: LucideIcons.messagesSquare,
+        art: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FeatureIcon(icon: LucideIcons.messageCircle, size: 36),
+            SizedBox(width: 12),
+            MascotLoader(anim: MascotAnim.sleep, size: 96),
+            SizedBox(width: 12),
+            FeatureIcon(icon: LucideIcons.fileUp, size: 36),
+          ],
+        ),
+        subtleTitle: s.isHost && s.status == SessionStatus.connected,
         title: s.status == SessionStatus.connected
-            ? context.l10n.startSharing
+            ? (s.isHost
+                  ? context.l10n.inviteFirstFile
+                  : context.l10n.sharingHint)
             : context.l10n.preparingSession,
-        detail: s.isHost
-            ? context.l10n.inviteFirstFile
-            : context.l10n.sharingHint,
+        detail: s.status == SessionStatus.connected
+            ? null
+            : (s.isHost
+                  ? context.l10n.inviteFirstFile
+                  : context.l10n.sharingHint),
       );
     }
     return ListView.builder(
@@ -684,14 +669,18 @@ class _CenteredState extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.detail,
-    this.showProgress = false,
+    this.art,
     this.action,
+    this.subtleTitle = false,
   });
 
+  final bool subtleTitle;
   final IconData icon;
   final String title;
-  final String detail;
-  final bool showProgress;
+  final String? detail;
+
+  /// 传入时替代图标容器（吉祥物动画）。
+  final Widget? art;
   final Widget? action;
 
   @override
@@ -702,26 +691,45 @@ class _CenteredState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.of(context).selfBubble,
-                borderRadius: BorderRadius.circular(24),
+            art ??
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppColors.of(context).selfBubble,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 32,
+                    color: AppColors.of(context).primary,
+                  ),
+                ),
+            const SizedBox(height: 20),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                style:
+                    (subtleTitle
+                            ? Theme.of(context).textTheme.bodyMedium
+                            : Theme.of(context).textTheme.titleMedium)
+                        ?.copyWith(
+                          height: 1.7,
+                          color: subtleTitle
+                              ? AppColors.of(context).textSecondary
+                              : null,
+                        ),
               ),
-              child: Icon(icon, size: 32, color: AppColors.of(context).primary),
             ),
-            const SizedBox(height: 12),
-            Text(title, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 6),
-            Text(
-              detail,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.of(context).textSecondary),
-            ),
-            if (showProgress) ...[
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(),
+            if (detail != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                detail!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.of(context).textSecondary),
+              ),
             ],
             if (action != null) ...[const SizedBox(height: 20), action!],
           ],
@@ -740,20 +748,20 @@ class _PeersMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     final secondary = AppColors.of(context).textSecondary;
     return PopupMenuButton<void>(
+      position: PopupMenuPosition.under,
       tooltip: context.l10n.onlineDevicesCount(session.peers.length),
       itemBuilder: (_) => [
         for (final peer in session.peers)
           PopupMenuItem<void>(
             child: Row(
               children: [
-                Icon(
-                  switch (peer.platform) {
+                FeatureIcon(
+                  size: 36,
+                  icon: switch (peer.platform) {
                     PeerPlatform.host => LucideIcons.radio,
                     PeerPlatform.app => LucideIcons.smartphone,
                     PeerPlatform.web => LucideIcons.globe,
                   },
-                  size: 18,
-                  color: secondary,
                 ),
                 const SizedBox(width: 12),
                 Flexible(
@@ -773,132 +781,46 @@ class _PeersMenu extends StatelessWidget {
             ),
           ),
       ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(LucideIcons.users, size: 20, color: secondary),
-            const SizedBox(width: 4),
-            Text('${session.peers.length}', style: TextStyle(color: secondary)),
-          ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.users, size: 20, color: secondary),
+              const SizedBox(width: 4),
+              Text(
+                '${session.peers.length}',
+                style: TextStyle(color: secondary),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// 主机端顶部邀请条：收起时一行地址 + 复制，展开显示二维码与加入设置。
-class _InviteBar extends StatelessWidget {
-  const _InviteBar({
-    required this.session,
-    required this.expanded,
-    required this.onToggle,
-  });
-
+/// 覆盖聊天主体的连接信息面板，顶部按钮保持可用。
+class _InvitePanel extends StatelessWidget {
+  const _InvitePanel({required this.session});
   final HostSession session;
-  final bool expanded;
-  final VoidCallback onToggle;
 
   @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return ListenableBuilder(
-      listenable: session,
-      builder: (context, _) {
-        final url = session.primaryUrl;
-        return Material(
-          color: colors.surface,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: colors.divider)),
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 880),
-                child: AnimatedSize(
-                  duration: AppMotion.durationOf(context),
-                  curve: AppMotion.curve,
-                  alignment: Alignment.topCenter,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      InkWell(
-                        onTap: onToggle,
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 16, right: 4),
-                          child: Row(
-                            children: [
-                              Icon(
-                                LucideIcons.qrCode,
-                                size: 18,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  url ?? context.l10n.noNetworkAddress,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                              if (url != null)
-                                IconButton(
-                                  tooltip: context.l10n.copyAddress,
-                                  icon: const Icon(LucideIcons.copy, size: 18),
-                                  onPressed: () async {
-                                    await Clipboard.setData(
-                                      ClipboardData(text: url),
-                                    );
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context)
-                                        ..hideCurrentSnackBar()
-                                        ..showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              context.l10n.addressCopied,
-                                            ),
-                                          ),
-                                        );
-                                    }
-                                  },
-                                ),
-                              IconButton(
-                                tooltip: context.l10n.inviteDevice,
-                                icon: Icon(
-                                  expanded
-                                      ? LucideIcons.chevronUp
-                                      : LucideIcons.chevronDown,
-                                  size: 20,
-                                ),
-                                onPressed: onToggle,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (expanded)
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxHeight: MediaQuery.sizeOf(context).height * 0.55,
-                          ),
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-                            child: HostAddressCard(session: session),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+  Widget build(BuildContext context) => Material(
+    color: AppColors.of(context).surface,
+    child: SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: HostAddressCard(session: session),
           ),
-        );
-      },
-    );
-  }
+        ),
+      ),
+    ),
+  );
 }

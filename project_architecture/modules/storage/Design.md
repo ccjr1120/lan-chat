@@ -18,12 +18,13 @@
 | 内容 | 目录 |
 | --- | --- |
 | `settings.json`、`history.jsonl` | `getApplicationSupportDirectory()` |
+| 历史记录归档 | ApplicationSupport 下 `history_archive/<uuid>.jsonl` |
 | 传输文件 | `getApplicationDocumentsDirectory()/files`（iOS 开启 `UIFileSharingEnabled`，可在“文件”App 中查看） |
 
 ## 公开接口
 
 - `SettingsStore.setDeviceName()`、`setAccessMode()`、`setThemeMode(String)`。
-- `HistoryStore.load({limit})`、`append()`、`clear()`。
+- `HistoryStore.load({limit})`、`append()`、`archive()`、`clear()`。
 - `FileStore.fileFor(meta)`、`dirFor(id)`、`createPartFile(id)`、`commit(part, meta)`、`importStream(meta, stream)`，以及 `sanitizeId` / `sanitizeFileName`。
 
 ## 依赖关系
@@ -39,3 +40,5 @@
 ## 主题选项兼容性
 
 settings.json 新增 themeMode 字符串，仅接受 system / light / dark，缺失或非法值回退 system；旧设备身份、名称与访问方式保持原值。setThemeMode 校验选项后通知 UI 并保存。locale 字符串仅接受 system / zh / en，缺失或非法值回退 system（跟随系统 locale）；setLocale 校验后通知 UI 并保存。
+
+每次创建主机会话时，`HistoryStore.archive()` 串行等待已有写入后将当前记录移动到归档目录，新会话使用空的 `history.jsonl`；归档不会删除传输文件。

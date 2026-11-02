@@ -7,11 +7,17 @@ import '../../core/models/access_mode.dart';
 import '../../l10n/ui_strings.dart';
 import '../../server/host_session.dart';
 import '../theme.dart';
+import 'feature_icon.dart';
 
-/// 聊天页顶部邀请条展开后的内容：二维码、地址与加入确认开关。
+/// 连接信息面板内容：二维码、地址与加入确认开关。
 class HostAddressCard extends StatelessWidget {
-  const HostAddressCard({super.key, required this.session});
+  const HostAddressCard({
+    super.key,
+    required this.session,
+    this.compact = false,
+  });
   final HostSession session;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
@@ -22,49 +28,47 @@ class HostAddressCard extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            context.l10n.scanInstructions,
-            textAlign: TextAlign.center,
-            style: textTheme.bodySmall,
-          ),
-          const SizedBox(height: 16),
           if (url != null) ...[
-            Center(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.of(context).divider),
-                ),
-                child: Semantics(
-                  label: context.l10n.qrDescription((url).toString()),
-                  child: QrImageView(
-                    data: url,
-                    size: 184,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            _AddressRow(url: url),
-            if (session.urls.length > 1)
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                shape: const Border(),
-                collapsedShape: const Border(),
-                title: Text(
-                  context.l10n.otherAddresses,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.of(context).textSecondary,
-                  ),
-                ),
+            if (compact)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  for (final u in session.urls.skip(1)) _AddressRow(url: u),
+                  _QrCode(url: url, size: 92),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          context.l10n.scanInstructions,
+                          style: textTheme.bodySmall,
+                        ),
+                        _AddressRow(url: url),
+                        for (final u in session.urls.skip(1))
+                          _AddressRow(url: u),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              Row(
+                children: [
+                  const FeatureIcon(icon: LucideIcons.qrCode, size: 40),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      context.l10n.scanInstructions,
+                      style: textTheme.titleMedium,
+                    ),
+                  ),
                 ],
               ),
+              const SizedBox(height: 16),
+              Center(child: _QrCode(url: url, size: 184)),
+              const SizedBox(height: 20),
+              for (final u in session.urls) _AddressRow(url: u),
+            ],
           ] else
             const _NoNetworkHint(),
           Align(
@@ -105,6 +109,26 @@ class HostAddressCard extends StatelessWidget {
         ],
       );
     },
+  );
+}
+
+class _QrCode extends StatelessWidget {
+  const _QrCode({required this.url, required this.size});
+  final String url;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.of(context).divider),
+    ),
+    child: Semantics(
+      label: context.l10n.qrDescription(url),
+      child: QrImageView(data: url, size: size, padding: EdgeInsets.zero),
+    ),
   );
 }
 

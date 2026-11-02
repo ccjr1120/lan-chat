@@ -227,6 +227,18 @@ ThemeData buildAppTheme({Brightness brightness = Brightness.light}) {
         borderSide: BorderSide(color: colors.primary, width: 1.5),
       ),
     ),
+    popupMenuTheme: PopupMenuThemeData(
+      color: colors.surface,
+      surfaceTintColor: Colors.transparent,
+      elevation: 3,
+      shadowColor: colors.textPrimary.withValues(alpha: 0.12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: colors.divider),
+      ),
+      textStyle: TextStyle(color: colors.textPrimary, fontSize: 14),
+      position: PopupMenuPosition.under,
+    ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: colors.surface,
       surfaceTintColor: Colors.transparent,

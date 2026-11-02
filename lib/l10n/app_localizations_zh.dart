@@ -217,7 +217,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enterAddress => '输入会话地址';
 
   @override
-  String get manualAddressHint => '找不到设备？使用主机显示的地址';
+  String get manualAddressHint => '输入主机显示的地址';
 
   @override
   String get sessionAddress => '会话地址';
@@ -316,10 +316,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get preparingSession => '正在准备会话';
 
   @override
-  String get inviteFirstFile => '邀请其他设备，或发送第一个文件。';
+  String get inviteFirstFile => '点击右上角二维码\n查看连接地址，邀请其他设备';
 
   @override
   String get sharingHint => '文字、图片和文件，都可以从这里发送。';
+
+  @override
+  String get hideInvitePanel => '隐藏邀请面板';
+
+  @override
+  String get showInvitePanel => '显示邀请面板';
 
   @override
   String get inviteDevice => '邀请设备';

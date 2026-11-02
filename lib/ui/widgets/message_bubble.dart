@@ -9,6 +9,7 @@ import '../../core/session/chat_session.dart';
 import '../../l10n/ui_strings.dart';
 import '../format.dart';
 import '../theme.dart';
+import 'mascot.dart';
 
 /// 聊天气泡：文字消息可长按复制；文件消息点击打开、菜单分享。
 class MessageBubble extends StatelessWidget {
@@ -236,12 +237,7 @@ class _FileBubble extends StatelessWidget {
                 ),
                 if (progress != null) ...[
                   const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 3,
-                    backgroundColor: AppColors.of(context).divider,
-                    color: AppColors.of(context).primary,
-                  ),
+                  MascotProgress(progress: progress, size: 64),
                 ],
               ],
             ),
@@ -368,10 +364,7 @@ class OutgoingTransferBubble extends StatelessWidget {
                     ),
                   )
                 else ...[
-                  LinearProgressIndicator(
-                    value: transfer.progress,
-                    minHeight: 4,
-                  ),
+                  MascotProgress(progress: transfer.progress, size: 64),
                   const SizedBox(height: 4),
                   Text(
                     '${formatBytes(transfer.sent)} / ${formatBytes(transfer.size)}'

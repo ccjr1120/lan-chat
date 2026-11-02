@@ -485,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualAddressHint.
   ///
   /// In en, this message translates to:
-  /// **'Cannot find the device? Use the address shown on the host'**
+  /// **'Enter the address shown by the host'**
   String get manualAddressHint;
 
   /// No description provided for @sessionAddress.
@@ -659,7 +659,7 @@ abstract class AppLocalizations {
   /// No description provided for @inviteFirstFile.
   ///
   /// In en, this message translates to:
-  /// **'Invite another device, or send your first file.'**
+  /// **'Tap the QR code in the top right\nto find the address and invite devices'**
   String get inviteFirstFile;
 
   /// No description provided for @sharingHint.
@@ -667,6 +667,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send messages, images and files from here.'**
   String get sharingHint;
+
+  /// No description provided for @hideInvitePanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide invitation panel'**
+  String get hideInvitePanel;
+
+  /// No description provided for @showInvitePanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Show invitation panel'**
+  String get showInvitePanel;
 
   /// No description provided for @inviteDevice.
   ///

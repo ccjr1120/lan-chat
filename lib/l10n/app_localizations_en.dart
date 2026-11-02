@@ -234,8 +234,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterAddress => 'Enter a session address';
 
   @override
-  String get manualAddressHint =>
-      'Cannot find the device? Use the address shown on the host';
+  String get manualAddressHint => 'Enter the address shown by the host';
 
   @override
   String get sessionAddress => 'Session address';
@@ -344,10 +343,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get inviteFirstFile =>
-      'Invite another device, or send your first file.';
+      'Tap the QR code in the top right\nto find the address and invite devices';
 
   @override
   String get sharingHint => 'Send messages, images and files from here.';
+
+  @override
+  String get hideInvitePanel => 'Hide invitation panel';
+
+  @override
+  String get showInvitePanel => 'Show invitation panel';
 
   @override
   String get inviteDevice => 'Invite a device';

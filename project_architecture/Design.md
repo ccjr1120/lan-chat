@@ -35,7 +35,8 @@ lib/
   client/                     客户端：WS 连接、dio 上传下载、客户端会话
   ui/                         App 界面（首页、聊天页、共享组件、主题）
   l10n/                       中英文 ARB、生成代码、UI 本地化辅助方法
-assets/web/index.html         网页端单页聊天界面
+assets/web/index.html         网页端单页聊天界面（含 mascot 绘制脚本块）
+tool/mascot/render_icons.mjs  从 mascot 脚本块生成三个平台的应用图标 PNG
 android/ ios/ macos/          flutter create 生成，补充网络权限
 ```
 
@@ -128,11 +129,27 @@ token 通过 `?token=` 或 `Authorization: Bearer` 传递。它只在对应 WS �
 
 App 在 `lib/app.dart` 配置浅色 / 深色 ThemeData。右上角共享设置菜单（SettingsMenu）提供主题（跟随系统 / 浅色 / 深色）、界面语言（跟随系统 / 简体中文 / English）与设备名称（菜单内联输入，回车保存，下次开启或加入会话时生效）三组设置，主题与语言初始均跟随系统。选项通过 SettingsStore 的 `themeMode`、`locale`、`deviceName` 持久化，旧设置文件缺失字段时回退为 system；MaterialApp（themeMode、locale）与 AppPreferences 监听设置更新。`lib/ui/theme.dart` 的 AppColors ThemeExtension 提供语义配色，全部为纯色：浅色主色 `#4F6FF0`、分隔线 `#EEF0F3`、正文 `#2B3544`；深色背景 `#1A1F29`、surface `#222834`、分隔线 `#2E3645`。没有渐变、光晕和卡片阴影，自己发送的气泡为 selfBubble 浅底 + 正文色文字。网页 CSS 变量与之逐一一致，默认通过 prefers-color-scheme 跟随浏览器，头部设置菜单可固定浅色 / 深色（`<html data-theme>`）。
 
-App 只有两个页面：首页与聊天页，不再有独立的"会话已开启 / 加入会话"视图，也没有常驻设备栏、最近文件栏或底部详情弹层。首页在一屏内放置创建会话按钮和附近会话实时列表（点击即加入），手动输入地址为列表下方的内联输入框。创建会话后直接进入聊天页；主机离开聊天页即结束会话，仅当有其他设备在线时才弹结束确认。聊天页顶部的邀请条（仅主机）收起时显示主地址与复制，展开显示二维码、其他地址与"加入需确认"开关；在线设备通过顶栏下拉菜单查看。仅保留两类必要确认弹窗：加入请求确认和清空记录 / 结束会话确认，设备名与手动地址均为内联输入。
+App 只有两个页面：首页与聊天页。首页直接显示创建会话按钮和连接地址输入框，不展示附近会话列表；每次创建主机会话前将旧聊天记录归档，新会话从空记录开始，原有文件保留。主机离开聊天页即结束会话，仅当有其他设备在线时才弹结束确认。聊天页主机通过右上角连接信息按钮切换二维码、地址和加入确认设置，默认隐藏，展开时覆盖整个聊天主体，不改变聊天布局。在线设备通过顶栏下拉菜单查看；设置菜单首先显示设备名称。
 
 首页与聊天页共享 WorkspaceBackground（background 纯色底），macOS 标题栏背景色与之保持一致。macOS 首页在所有窗口宽度均使用原生产品标题，不显示重复 AppBar；页面右上保留设置菜单。MainFlutterWindow 通过 `lanchat/window` MethodChannel 的 `setStyle` 接收本地化产品名与 themeMode，原生标题栏透明并与 Flutter 背景一致；system 时继承系统 appearance，light / dark 时设置对应 NSAppearance。原生窗口按钮与标题区域保留。
 
 App 微动效统一为 200ms easeOutCubic，集中在 `lib/ui/widgets/motion.dart`（AppMotion 常量、FadeSlideIn 入场），不新增依赖；主题切换为 250ms 淡入淡出（MaterialApp themeAnimationDuration/Curve）。主操作按钮使用主题 FilledButton 纯色样式。
+
+## 吉祥物与加载动画
+
+品牌形象为几何化蓝猫，纯 Canvas 程序化绘制，无位图素材、不联网。几何、调色板（light / dark）、帧表（A 眨眼抖耳 blink 1.6s、B 猫爪拨球 paw 1.2s、C 尾巴进度 tail、D 睡觉打呼 sleep 2.4s）与 animParams 公式只在两处实现，并要求逐行一致：网页端 `assets/web/index.html` 的 `/* mascot:begin */ … /* mascot:end */` 脚本块，以及 App 端 `lib/ui/widgets/mascot_painter.dart` 的 CustomPainter 移植。两处函数名相同，修改任意一端须同步另一端。
+
+| 点位 | App | 网页端 |
+| --- | --- | --- |
+| A | 聊天页「等待主机确认」 | 遮罩「正在连接主机…」「等待主机确认」 |
+| B | 首页「创建会话」按钮内 18px mini | — |
+| C | 文件下载与发送进度（真实进度） | 上传进度（真实 sent/size）；下载走浏览器原生下载，无进度来源 |
+| D | 聊天页空态 | 消息列表空态 |
+| 品牌 | 首页 AppBar 标题旁（macOS 为正文标题旁） | favicon（运行时生成的 data URI）、头部标题旁 logo |
+
+减少动态效果（App `disableAnimations`、网页 `prefers-reduced-motion`）时 A/B/D 显示静态帧，C 仍跟随真实进度；不可见时不绘制（App 由 TickerMode 停止，网页 rAF 循环只画可见画布，无可见画布即停止）。
+
+应用图标：项目不使用 flutter_launcher_icons。`tool/mascot/render_icons.mjs` 截取 index.html 的 mascot 块，用外部只读的 @napi-rs/canvas（`CANVAS_MODULE` 环境变量指定）按真实像素绘制，原地覆盖 Android `mipmap-*/ic_launcher.png`、iOS / macOS `AppIcon.appiconset` 中的 PNG（Contents.json 不变）；小于 64px 使用 mini 细节，iOS 图标为不透明 RGB。运行：`CANVAS_MODULE=/path/to/@napi-rs/canvas node tool/mascot/render_icons.mjs`。
 
 ## 中英文本地化
 

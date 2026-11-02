@@ -60,32 +60,73 @@ class SettingsMenu extends StatelessWidget {
       IconData? icon,
     }) => PopupMenuItem<VoidCallback>(
       value: onSelected,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Semantics(
         selected: selected,
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              child: icon == null ? null : Icon(icon, size: 18),
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: Text(label)),
-            if (selected)
-              Icon(
-                LucideIcons.check,
-                size: 18,
-                color: AppColors.of(context).primary,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.of(context).selfBubble : null,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 24,
+                child: icon == null
+                    ? null
+                    : Icon(
+                        icon,
+                        size: 18,
+                        color: selected
+                            ? AppColors.of(context).primary
+                            : AppColors.of(context).textSecondary,
+                      ),
               ),
-          ],
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: selected
+                        ? AppColors.of(context).primary
+                        : AppColors.of(context).textPrimary,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+              ),
+              if (selected)
+                Icon(
+                  LucideIcons.check,
+                  size: 18,
+                  color: AppColors.of(context).primary,
+                ),
+            ],
+          ),
         ),
       ),
     );
 
     return PopupMenuButton<VoidCallback>(
+      position: PopupMenuPosition.under,
       tooltip: l10n.settings,
       icon: const Icon(LucideIcons.settings2, size: 21),
       onSelected: (apply) => apply(),
       itemBuilder: (context) => [
+        header(LucideIcons.monitorSmartphone, l10n.deviceName),
+        PopupMenuItem<VoidCallback>(
+          enabled: false,
+          height: 64,
+          child: _DeviceNameField(
+            initial: preferences.deviceName,
+            hint: l10n.deviceNameHint,
+            onSubmitted: (name) {
+              preferences.onDeviceNameChanged(name);
+              Navigator.pop(context);
+            },
+          ),
+        ),
+        const PopupMenuDivider(),
         header(LucideIcons.sunMoon, l10n.theme),
         for (final mode in ThemeMode.values)
           option(
@@ -102,20 +143,6 @@ class SettingsMenu extends StatelessWidget {
             selected: locale?.languageCode == currentLanguage,
             onSelected: () => preferences.onLocaleChanged(locale),
           ),
-        const PopupMenuDivider(),
-        header(LucideIcons.monitorSmartphone, l10n.deviceName),
-        PopupMenuItem<VoidCallback>(
-          enabled: false,
-          height: 64,
-          child: _DeviceNameField(
-            initial: preferences.deviceName,
-            hint: l10n.deviceNameHint,
-            onSubmitted: (name) {
-              preferences.onDeviceNameChanged(name);
-              Navigator.pop(context);
-            },
-          ),
-        ),
       ],
     );
   }
